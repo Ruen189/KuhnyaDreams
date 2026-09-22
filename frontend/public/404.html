@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Бинго-планировщик</title>
+    <script>
+      // GitHub Pages отдаёт 404 на любой путь, кроме index.html.
+      // У нас нет клиентского роутинга, поэтому просто возвращаемся в корень приложения.
+      (function () {
+        var root = window.location.pathname.replace(/\/[^/]*$/, '/');
+        window.location.replace(root);
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Перенаправляем в приложение… <a href="./">Открыть бинго-планировщик</a></p>
+  </body>
+</html>

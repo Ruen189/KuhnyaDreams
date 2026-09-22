@@ -250,22 +250,44 @@ public class GameService(AppDbContext db, NotificationService notifications, ILo
         if (cellIdsInOrder.Any(id => cells.All(c => c.Id != id)))
             throw new ArgumentException("Список содержит ячейку, которой нет на этой карточке.");
 
-        for (var i = 0; i < cellIdsInOrder.Count; i++)
-        {
-            cells.First(c => c.Id == cellIdsInOrder[i]).Position = i;
-        }
-
-        await db.SaveChangesAsync(ct);
+        var ordered = cellIdsInOrder.Select(id => cells.First(c => c.Id == id)).ToList();
+        await ApplyPositionsAsync(ordered, ct);
     }
 
     public async Task SwapAsync(Board board, Guid cellId, Guid targetCellId, CancellationToken ct)
     {
         if (cellId == targetCellId) return;
 
-        var cell = board.Cells.FirstOrDefault(c => c.Id == cellId) ?? throw new KeyNotFoundException("Ячейка не найдена.");
-        var target = board.Cells.FirstOrDefault(c => c.Id == targetCellId) ?? throw new KeyNotFoundException("Целевая ячейка не найдена.");
+        var cells = board.Cells.OrderBy(c => c.Position).ToList();
+        var cell = cells.FirstOrDefault(c => c.Id == cellId) ?? throw new KeyNotFoundException("Ячейка не найдена.");
+        var target = cells.FirstOrDefault(c => c.Id == targetCellId) ?? throw new KeyNotFoundException("Целевая ячейка не найдена.");
 
-        (cell.Position, target.Position) = (target.Position, cell.Position);
+        var sourceIndex = cells.IndexOf(cell);
+        var targetIndex = cells.IndexOf(target);
+        (cells[sourceIndex], cells[targetIndex]) = (cells[targetIndex], cells[sourceIndex]);
+
+        await ApplyPositionsAsync(cells, ct);
+    }
+
+    /// <summary>
+    /// Раскладывает ячейки по позициям 0..N-1 в два прохода: сначала во временные отрицательные позиции,
+    /// затем в целевые. Уникальный индекс {BoardId, Position} не даёт переставить ячейки внутри одного
+    /// SaveChanges — EF Core видит это как циклическую зависимость между изменёнными строками.
+    /// </summary>
+    private async Task ApplyPositionsAsync(IReadOnlyList<BoardCell> orderedCells, CancellationToken ct)
+    {
+        for (var i = 0; i < orderedCells.Count; i++)
+        {
+            orderedCells[i].Position = -(i + 1);
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        for (var i = 0; i < orderedCells.Count; i++)
+        {
+            orderedCells[i].Position = i;
+        }
+
         await db.SaveChangesAsync(ct);
     }
 

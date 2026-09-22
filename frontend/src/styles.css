@@ -443,6 +443,42 @@ textarea {
   }
 }
 
+/* Кнопка-переключатель режима перемещения клеток. */
+.btn--move-on {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+  color: #2a1b0a;
+  font-weight: 700;
+}
+
+/* Центральная вкладка — карточка, она же открывается после входа. */
+.tabbar__item--primary span:first-child {
+  font-size: clamp(1.3rem, 0.6vw + 1.1rem, 1.6rem);
+}
+
+.tabbar__item--primary.tabbar__item--active {
+  background: rgba(255, 204, 77, 0.22);
+}
+
+/* Строка списка, открывающая подробности карточки. */
+.list__item--tap {
+  width: 100%;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.list__item--tap:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.list__item--current {
+  border-color: var(--accent);
+  background: rgba(124, 92, 255, 0.18);
+}
+
 /* ---------------- карточка бинго ---------------- */
 .board {
   display: grid;
@@ -454,14 +490,15 @@ textarea {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
   gap: 4px;
   aspect-ratio: 1;
   padding: clamp(6px, 0.6vw, 10px) clamp(5px, 0.5vw, 9px);
   border-radius: 14px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.05);
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   overflow: hidden;
   transition: transform 0.12s ease, background 0.15s ease;
@@ -479,6 +516,7 @@ textarea {
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .board__cell-category {
@@ -511,9 +549,60 @@ textarea {
   cursor: default;
 }
 
-.board__cell--swap-source {
+/* ---- режим перемещения: зажал клетку и перетащил на другую ---- */
+.board--moving {
+  touch-action: none;
+  user-select: none;
+}
+
+.board--moving .board__cell {
+  cursor: grab;
+  animation: cell-wiggle 0.35s ease;
+}
+
+.board__cell--dragging {
+  cursor: grabbing;
+  transform: scale(1.06);
+  z-index: 2;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
   outline: 2px solid var(--accent-2);
   outline-offset: 2px;
+}
+
+.board__cell--drop-target {
+  outline: 3px dashed var(--accent-2);
+  outline-offset: -4px;
+  background: rgba(255, 204, 77, 0.16);
+}
+
+@keyframes cell-wiggle {
+  from {
+    transform: rotate(-1.2deg);
+  }
+  50% {
+    transform: rotate(1.2deg);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ---- карточка только для чтения (история) ---- */
+.board--readonly .board__cell {
+  cursor: default;
+}
+
+.board__cell--static {
+  pointer-events: none;
+  text-align: center;
+}
+
+.board--readonly .board__cell-text {
+  font-size: clamp(0.6rem, 0.3vw + 0.5rem, 0.76rem);
+}
+
+.board--readonly .board__cell-category {
+  font-size: clamp(0.52rem, 0.2vw + 0.46rem, 0.62rem);
 }
 
 .progress {

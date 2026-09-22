@@ -40,10 +40,7 @@ export default function StatsScreen() {
     <>
       <section className="card stack">
         <div className="row row--between row--wrap">
-          <div>
-            <h2 className="card__title">Прогресс</h2>
-            <p className="card__hint">Сколько клеток закрыто, какие линии собраны и как держится серия.</p>
-          </div>
+          <h2 className="card__title">Прогресс</h2>
           <div className="chips">
             {RANGES.map((value) => (
               <button

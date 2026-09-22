@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { api, ApiError } from '../api';
+import { api, ApiError, API_LOOKS_UNCONFIGURED } from '../api';
 import type { UserDto } from '../types';
 import { ErrorText } from './ui';
 
@@ -88,6 +88,14 @@ export default function LoginScreen({ onAuthed }: { onAuthed: (user: UserDto) =>
               Регистрация
             </button>
           </div>
+
+          {API_LOOKS_UNCONFIGURED ? (
+            <p className="error-text">
+              ⚠️ Эта сборка открыта со статического хостинга (GitHub Pages) без адреса API. Пока в репозитории не задана
+              переменная <strong>API_URL</strong>, войти не получится: данные живут на сервере, а Pages отдаёт только
+              файлы интерфейса.
+            </p>
+          ) : null}
 
           <label className="field">
             <span>E-mail</span>

@@ -50,6 +50,38 @@ dotnet run          # http://localhost:5207 — и интерфейс, и API н
 `Program.cs` поднимает статику и SPA-fallback (`MapFallbackToFile("index.html")`) только если `wwwroot/index.html`
 существует, поэтому обычная разработка через Vite от этого не страдает.
 
+## GitHub Pages (демо интерфейса)
+
+Репозиторий: `https://github.com/Ruen189/KuhnyaDreams` → адрес Pages: **https://ruen189.github.io/KuhnyaDreams/**.
+Workflow `.github/workflows/deploy-pages.yml` собирает `frontend` и публикует папку `dist` при каждом пуше в `main`.
+
+**Что нужно сделать один раз на GitHub:**
+
+1. **Settings → Pages → Build and deployment → Source: `GitHub Actions`** (не «Deploy from a branch»).
+2. **Settings → Secrets and variables → Actions → вкладка Variables → New repository variable**:
+   - имя `API_URL`, значение — адрес вашего бэкенда по HTTPS, без слэша на конце
+     (например `https://bingo-api.onrender.com`).
+   - без этой переменной Pages отдаст интерфейс, но вход не сработает: страница сама покажет подсказку.
+3. **Разрешить CORS на бэкенде**: в `appsettings.json` в `Cors:Origins` добавить `https://ruen189.github.io`
+   (или переменной окружения `Cors__Origins__0=https://ruen189.github.io`), иначе браузер отрежет запросы к API.
+4. Запустить сборку: `Actions → Deploy frontend to GitHub Pages → Run workflow`
+   (или просто запушить изменение в `frontend/`). Через ~1 минуту сайт будет доступен по адресу выше.
+
+**Куда деплоить API.** Pages — это только статика, данные лежат на сервере. Варианты для бэкенда:
+`docker compose up -d --build` на VPS, Render/Railway/Fly.io (в репозитории уже есть готовый `Dockerfile`),
+либо собственный сервер с HTTPS. Важно: Pages работает по HTTPS, поэтому API тоже должен быть по HTTPS —
+иначе браузер заблокирует запросы как mixed content.
+
+**Локальная проверка Pages-сборки:**
+
+```powershell
+cd frontend
+$env:VITE_BASE = '/KuhnyaDreams/'
+$env:VITE_API_URL = 'http://localhost:8080'
+npm run build
+npx vite preview --base=/KuhnyaDreams/    # http://localhost:4173/KuhnyaDreams/
+```
+
 ## Docker (PostgreSQL + собранная SPA)
 
 ```bash

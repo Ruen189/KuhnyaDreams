@@ -21,6 +21,19 @@ import { clearSession, getToken, saveSession } from './session';
 
 const BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
 
+/**
+ * Адрес API, к которому привязан собранный фронтенд.
+ * Пусто — значит запросы уходят на тот же домен (Docker, `dotnet run`, dev-прокси Vite).
+ */
+export const API_BASE = BASE;
+
+/**
+ * Статический хостинг без настроенного API (например, GitHub Pages без переменной API_URL):
+ * относительный /api там не существует, поэтому на экране входа показываем честную подсказку.
+ */
+export const API_LOOKS_UNCONFIGURED =
+  BASE === '' && typeof window !== 'undefined' && /\.github\.io$/i.test(window.location.hostname);
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,

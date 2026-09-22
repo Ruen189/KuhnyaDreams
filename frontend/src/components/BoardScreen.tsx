@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { api, ApiError } from '../api';
 import type { BoardInput } from '../api';
 import type { AchievementDto, BoardDto, BoardSummaryDto, CellDto, RewardDto, TaskDto, UserDto } from '../types';
-import { BoardStatus, PERIOD_LABELS } from '../types';
-import { periodRangeLabel, plural } from '../utils/board';
+import { BoardStatus } from '../types';
+import { plural } from '../utils/board';
 import AchievementSheet from './AchievementSheet';
+import BoardHistorySheet from './BoardHistorySheet';
 import CreateBoardSheet from './CreateBoardSheet';
 import { EmptyState, ErrorText, ProgressBar, Spinner } from './ui';
 
@@ -23,82 +25,49 @@ export default function BoardScreen({ user, onToast, onDataChanged }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [swapMode, setSwapMode] = useState(false);
-  const [swapSource, setSwapSource] = useState<string | null>(null);
   const [celebrating, setCelebrating] = useState<AchievementDto[]>([]);
   const [suggestedRewards, setSuggestedRewards] = useState<RewardDto[]>([]);
   const [sheetError, setSheetError] = useState<string | null>(null);
+  // Режим перемещения: зажал клетку — перетащил на другую.
+  const [moveMode, setMoveMode] = useState(false);
+  const [dragFrom, setDragFrom] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState<string | null>(null);
+  // Подробности по карточке из истории.
+  const [historySummary, setHistorySummary] = useState<BoardSummaryDto | null>(null);
 
   const describe = (err: unknown) =>
     err instanceof ApiError ? err.message : 'Не удалось связаться с сервером. Проверьте соединение.';
 
-  const loadBoard = useCallback(
-    async (boardId: string) => {
-      try {
-        setBoard(await api.board(boardId));
-      } catch (err) {
-        setError(describe(err));
-      }
-    },
-    []
-  );
+  const loadBoard = useCallback(async (boardId: string) => {
+    try {
+      setBoard(await api.board(boardId));
+    } catch (err) {
+      setError(describe(err));
+    }
+  }, []);
 
-  const load = useCallback(
-    async (preferredId?: string) => {
-      setLoading(true);
-      try {
-        const [current, all, taskList] = await Promise.all([
-          api.currentBoards(),
-          api.boards(),
-          api.tasks()
-        ]);
-        setSummaries(all);
-        setTasks(taskList);
-        const target = preferredId ?? current[0]?.id ?? all[0]?.id ?? null;
-        if (target) {
-          setBoard(await api.board(target));
-        } else {
-          setBoard(null);
-        }
-        setError(null);
-      } catch (err) {
-        setError(describe(err));
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+  const load = useCallback(async (preferredId?: string) => {
+    setLoading(true);
+    try {
+      const [current, all, taskList] = await Promise.all([api.currentBoards(), api.boards(), api.tasks()]);
+      setSummaries(all);
+      setTasks(taskList);
+      const target = preferredId ?? current[0]?.id ?? all[0]?.id ?? null;
+      setBoard(target ? await api.board(target) : null);
+      setError(null);
+    } catch (err) {
+      setError(describe(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
 
   const handleCellClick = async (cell: CellDto) => {
-    if (!board || busy) return;
-    if (cell.isPlaceholder) return;
-
-    if (swapMode) {
-      if (!swapSource) {
-        setSwapSource(cell.id);
-        return;
-      }
-      if (swapSource === cell.id) {
-        setSwapSource(null);
-        return;
-      }
-      setBusy(true);
-      try {
-        setBoard(await api.swapCells(board.id, swapSource, cell.id));
-        setSwapSource(null);
-        onToast('Ячейки поменялись местами 🔄');
-      } catch (err) {
-        setError(describe(err));
-      } finally {
-        setBusy(false);
-      }
-      return;
-    }
+    if (!board || busy || moveMode || cell.isPlaceholder) return;
 
     if (board.status !== BoardStatus.Active) {
       onToast('Карточка не активна — верните её в игру кнопкой «Вернуть в игру».');
@@ -123,8 +92,7 @@ export default function BoardScreen({ user, onToast, onDataChanged }: Props) {
       setBusy(false);
     }
   };
-
-  const createBoard = async (input: BoardInput) => {
+const createBoard = async (input: BoardInput) => {
     setBusy(true);
     setCreateError(null);
     try {
@@ -161,17 +129,55 @@ export default function BoardScreen({ user, onToast, onDataChanged }: Props) {
     }
   };
 
-  const shuffle = async () => {
-    if (!board) return;
+  // ---------------------------------------------------------------- перемещение клеток
+  const handlePointerDown = (cell: CellDto, event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!moveMode || busy || !board) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDragFrom(cell.id);
+    setDragOver(cell.id);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!dragFrom) return;
+    const under = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-cell-id]');
+    const id = under?.dataset.cellId;
+    if (id && id !== dragOver) setDragOver(id);
+  };
+
+  const finishDrag = async () => {
+    const source = dragFrom;
+    const target = dragOver;
+    setDragFrom(null);
+    setDragOver(null);
+    if (!source || !target || source === target || !board) return;
+
+    const order = [...board.cells].sort((a, b) => a.position - b.position).map((cell) => cell.id);
+    const from = order.indexOf(source);
+    const to = order.indexOf(target);
+    if (from < 0 || to < 0) return;
+
+    order.splice(to, 0, ...order.splice(from, 1));
+
     setBusy(true);
     try {
-      setBoard(await api.shuffleBoard(board.id));
-      onToast('Ячейки перемешаны 🎲');
+      setBoard(await api.reorderBoard(board.id, order));
+      onToast('Клетки переставлены 🔄');
     } catch (err) {
       setError(describe(err));
     } finally {
       setBusy(false);
     }
+  };
+
+  const cancelDrag = () => {
+    setDragFrom(null);
+    setDragOver(null);
+  };
+
+  const toggleMoveMode = () => {
+    cancelDrag();
+    setMoveMode((current) => !current);
   };
 
   const changeStatus = async (status: BoardStatus) => {
@@ -210,19 +216,11 @@ export default function BoardScreen({ user, onToast, onDataChanged }: Props) {
 
   const cells = board ? [...board.cells].sort((a, b) => a.position - b.position) : [];
   const playable = board?.progress.playableCells ?? 0;
-
-  return (
+return (
     <>
       <section className="card stack span-full">
         <div className="row row--between row--wrap">
-          <div>
-            <h2 className="card__title">{board ? board.title : 'Карточки бинго'}</h2>
-            <p className="card__hint">
-              {board
-                ? `${PERIOD_LABELS[board.period]} · ${periodRangeLabel(board.period, board.startDate, board.endDate)} · поле ${board.size}×${board.size}`
-                : 'Соберите карточку из своих задач'}
-            </p>
-          </div>
+          <h2 className="card__title">{board ? board.title : 'Карточки бинго'}</h2>
           <div className="row row--wrap">
             <button className="btn btn--soft btn--small" type="button" onClick={() => setShowCreate(true)}>
               ➕ Новая карточка
@@ -255,22 +253,37 @@ export default function BoardScreen({ user, onToast, onDataChanged }: Props) {
             </div>
             <ProgressBar value={board.progress.percent} />
 
-            <div className="board" style={{ ['--size' as string]: board.size }}>
+            <div
+              className={`board ${moveMode ? 'board--moving' : ''}`}
+              style={{ ['--size' as string]: board.size }}
+            >
               {cells.map((cell) => {
                 const classes = ['board__cell'];
                 if (cell.isPlaceholder) classes.push('board__cell--placeholder');
                 if (cell.isFree) classes.push('board__cell--free');
                 if (cell.isCompleted && !cell.isFree) classes.push('board__cell--done');
-                if (swapSource === cell.id) classes.push('board__cell--swap-source');
+                if (dragFrom === cell.id) classes.push('board__cell--dragging');
+                if (dragFrom && dragOver === cell.id && dragFrom !== cell.id) classes.push('board__cell--drop-target');
 
                 return (
                   <button
                     key={cell.id}
                     type="button"
+                    data-cell-id={cell.id}
                     className={classes.join(' ')}
                     onClick={() => void handleCellClick(cell)}
-                    disabled={busy || cell.isPlaceholder}
-                    aria-label={cell.isCompleted ? `Снять отметку: ${cell.title}` : `Отметить: ${cell.title}`}
+                    onPointerDown={(event) => handlePointerDown(cell, event)}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={() => void finishDrag()}
+                    onPointerCancel={cancelDrag}
+                    disabled={busy || (cell.isPlaceholder && !moveMode)}
+                    aria-label={
+                      moveMode
+                        ? `Переместить: ${cell.title}`
+                        : cell.isCompleted
+                          ? `Снять отметку: ${cell.title}`
+                          : `Отметить: ${cell.title}`
+                    }
                   >
                     {cell.isFree ? (
                       <span className="board__cell-text">Свободная клетка 🎁</span>
@@ -288,33 +301,23 @@ export default function BoardScreen({ user, onToast, onDataChanged }: Props) {
               })}
             </div>
 
-            <div className="chips">
-              {board.lines.map((line) => (
-                <span
-                  key={`${line.kind}-${line.index}`}
-                  className={`chip ${line.isComplete ? 'chip--success' : line.isActive ? 'chip--warn' : ''}`}
-                >
-                  {line.kind === 'Row' ? 'ряд' : line.kind === 'Column' ? 'столбец' : 'диагональ'} {line.index + 1}
-                  {line.isComplete ? ' ✓' : line.missing > 0 ? ` · ещё ${line.missing}` : ''}
-                </span>
-              ))}
-            </div>
-
-            <div className="row row--wrap">
-              <button className="btn btn--ghost btn--small" type="button" disabled={busy} onClick={() => void shuffle()}>
-                🎲 Перемешать
-              </button>
+            {moveMode ? (
+              <p className="card__hint">
+                ✋ Зажмите клетку и перетащите её на другую — задача встанет на новое место. Нажмите «✅ Готово», чтобы
+                вернуться к игре.
+              </p>
+            ) : null}
+<div className="row row--wrap">
               <button
-                className={`btn ${swapMode ? 'btn--soft' : 'btn--ghost'} btn--small`}
+                className={`btn ${moveMode ? 'btn--move-on' : 'btn--ghost'} btn--small`}
                 type="button"
                 disabled={busy}
-                onClick={() => {
-                  setSwapSource(null);
-                  setSwapMode((current) => !current);
-                }}
+                aria-pressed={moveMode}
+                onClick={toggleMoveMode}
               >
-                {swapMode ? 'Выберите две клетки…' : '🔄 Поменять клетки'}
+                {moveMode ? '✅ Готово' : '✋ Перемещать'}
               </button>
+
               {board.status === BoardStatus.Active ? (
                 <button
                   className="btn btn--ghost btn--small"
@@ -334,7 +337,13 @@ export default function BoardScreen({ user, onToast, onDataChanged }: Props) {
                   ↩️ Вернуть в игру
                 </button>
               )}
-              <button className="btn btn--danger btn--small" type="button" disabled={busy} onClick={() => void removeBoard()}>
+
+              <button
+                className="btn btn--danger btn--small"
+                type="button"
+                disabled={busy}
+                onClick={() => void removeBoard()}
+              >
                 🗑 Удалить
               </button>
             </div>
@@ -342,41 +351,28 @@ export default function BoardScreen({ user, onToast, onDataChanged }: Props) {
         )}
       </section>
 
-      {summaries.length > 1 ? (
+      {summaries.length > 0 ? (
         <section className="card stack span-full">
-          <h2 className="card__title">Мои карточки</h2>
-          <p className="card__hint">Нажмите на карточку, чтобы открыть её. Архивные тоже можно смотреть и редактировать.</p>
+          <h2 className="card__title">История карточек</h2>
           <div className="list">
-            {summaries.map((item) => {
-              const classes = ['list__item'];
-              if (item.id === board?.id) classes.push('list__item--done');
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={classes.join(' ')}
-                  style={{ textAlign: 'left' }}
-                  onClick={() => {
-                    setSwapMode(false);
-                    setSwapSource(null);
-                    void loadBoard(item.id);
-                  }}
-                >
-                  <span className="list__item-main">
-                    <span className="list__item-title">
-                      {item.id === board?.id ? '▶ ' : ''}
-                      {item.title}
-                    </span>
-                    <span className="list__item-meta">
-                      {PERIOD_LABELS[item.period]} · {periodRangeLabel(item.period, item.startDate, item.endDate)} ·{' '}
-                      {item.completedCells}/{item.playableCells} клеток ({item.percent}%)
-                      {item.hasBingo ? ' · БИНГО 🎉' : ''}
-                      {item.status === BoardStatus.Archived ? ' · архив' : ''}
-                    </span>
+            {summaries.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`list__item list__item--tap ${item.id === board?.id ? 'list__item--current' : ''}`}
+                onClick={() => setHistorySummary(item)}
+              >
+                <span className="list__item-main">
+                  <span className="list__item-title">
+                    {item.id === board?.id ? '▶ ' : ''}
+                    {item.title}
                   </span>
-                </button>
-              );
-            })}
+                </span>
+                <span aria-hidden="true" className="muted">
+                  ›
+                </span>
+              </button>
+            ))}
           </div>
         </section>
       ) : null}
@@ -388,6 +384,18 @@ export default function BoardScreen({ user, onToast, onDataChanged }: Props) {
           error={createError}
           onClose={() => setShowCreate(false)}
           onCreate={(input) => void createBoard(input)}
+        />
+      ) : null}
+
+      {historySummary ? (
+        <BoardHistorySheet
+          summary={historySummary}
+          onClose={() => setHistorySummary(null)}
+          onOpen={(boardId) => {
+            setHistorySummary(null);
+            setMoveMode(false);
+            void loadBoard(boardId);
+          }}
         />
       ) : null}
 
