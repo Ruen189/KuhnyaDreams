@@ -1,0 +1,6 @@
+@BingoPlanner.Api_HostAddress = http://localhost:5207
+
+GET {{BingoPlanner.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,44 @@
+# Полный стек: PostgreSQL + API/SPA.
+# Запуск:  docker compose up --build
+# Приложение: http://localhost:8080  (демо-доступ: demo@bingo.local / demo1234)
+#
+# Явное имя проекта: папка называется «Бинго», а compose собирает имя проекта
+# из имени каталога и отбрасывает не-ASCII символы — получается пустая строка
+# и ошибка "project name must not be empty". Поле name фиксирует имя заранее.
+name: bingo
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bingo
+      POSTGRES_USER: bingo
+      POSTGRES_PASSWORD: bingo
+    volumes:
+      - bingo-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bingo -d bingo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/BingoPlanner.Api/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      Database__Provider: Postgres
+      ConnectionStrings__Postgres: Host=db;Port=5432;Database=bingo;Username=bingo;Password=bingo
+      Jwt__Key: bingo-planner-docker-key-change-me-0123456789
+      Seed__DemoData: "true"
+      Telegram__BotToken: ""
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  bingo-pgdata:

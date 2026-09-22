@@ -1,0 +1,19 @@
+{
+  "name": "Бинго-планировщик",
+  "short_name": "Бинго",
+  "description": "Планировщик задач в формате бинго: линии, достижения и награды.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#120c2b",
+  "theme_color": "#1f1147",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

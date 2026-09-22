@@ -1,0 +1,26 @@
+# --- .NET ------------------------------------------------------------------
+bin/
+obj/
+*.user
+appsettings.Local.json
+
+# локальная база SQLite прототипа
+*.db
+*.db-shm
+*.db-wal
+
+# --- Node ------------------------------------------------------------------
+node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# --- собранная SPA внутри API ----------------------------------------------
+backend/BingoPlanner.Api/wwwroot/
+
+# --- IDE / ОС ---------------------------------------------------------------
+.vs/
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
