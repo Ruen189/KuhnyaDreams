@@ -8,29 +8,68 @@ export type Theme = 'neon' | 'light' | 'dark';
 
 export const THEMES: { id: Theme; label: string; emoji: string; hint: string }[] = [
   { id: 'neon', label: 'Неон', emoji: '🌌', hint: 'Фиолетовый фон, яркие неоновые акценты' },
-  { id: 'light', label: 'Светлая', emoji: '🌸', hint: 'Розовые оттенки на светлом фоне' },
+  { id: 'light', label: 'Светлая', emoji: '🌸', hint: 'Тёплый бежевый фон, приглушённая яркость' },
   { id: 'dark', label: 'Тёмная', emoji: '🌚', hint: 'Спокойные серые тона' }
 ];
 
 // Цвет адресной строки/статус-бара в мобильном браузере для каждой темы.
 const THEME_COLORS: Record<Theme, string> = {
   neon: '#1f1147',
-  light: '#f4f2f8',
+  light: '#f2e9dc',
   dark: '#1c1c20'
 };
+
+/** Сколько держать переходной класс, если браузер не умеет View Transitions. */
+const THEME_TRANSITION_MS = 420;
+
+let themeTransitionTimer: number | undefined;
+
+/** Браузеры без View Transitions плавно меняют цвета через короткий класс на <html>. */
+function flashThemeTransition(root: HTMLElement): void {
+  root.classList.add('theme-switching');
+  window.clearTimeout(themeTransitionTimer);
+  themeTransitionTimer = window.setTimeout(() => root.classList.remove('theme-switching'), THEME_TRANSITION_MS);
+}
 
 export function getTheme(): Theme {
   const stored = localStorage.getItem(THEME_KEY);
   return stored === 'light' || stored === 'dark' || stored === 'neon' ? stored : 'neon';
 }
 
-/** Ставит тему на <html> и запоминает выбор. Вызывается и при старте, и из настроек. */
-export function applyTheme(theme: Theme): void {
-  document.documentElement.dataset.theme = theme;
-  document
-    .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', THEME_COLORS[theme]);
-  localStorage.setItem(THEME_KEY, theme);
+/**
+ * Ставит тему на <html> и запоминает выбор. Вызывается и при старте, и из настроек.
+ * Смена темы анимируется: в современных браузерах — кроссфейд через View Transitions
+ * (он плавно перекрашивает и градиенты), иначе — короткий переход по цветам.
+ * При первом применении (старт приложения) анимация не нужна — `animate: false`.
+ */
+export function applyTheme(theme: Theme, animate = true): void {
+  const root = document.documentElement;
+  const commit = () => {
+    root.dataset.theme = theme;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', THEME_COLORS[theme]);
+    localStorage.setItem(THEME_KEY, theme);
+  };
+
+  if (!animate) {
+    root.classList.remove('theme-switching');
+    commit();
+    return;
+  }
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const startViewTransition = (
+    document as Document & { startViewTransition?: (callback: () => void) => unknown }
+  ).startViewTransition;
+
+  if (!reduceMotion && typeof startViewTransition === 'function') {
+    startViewTransition.call(document, commit);
+    return;
+  }
+
+  if (!reduceMotion) flashThemeTransition(root);
+  commit();
 }
 
 export function getToken(): string | null {

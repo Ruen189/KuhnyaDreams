@@ -41,30 +41,6 @@ export default function LoginScreen({ onAuthed }: { onAuthed: (user: UserDto) =>
   return (
     <div className="app app--auth">
       <main className="auth">
-        <section className="card stack auth__hero">
-          <p className="auth__logo" aria-hidden="true">
-            🎲
-          </p>
-          <h1 className="auth__title">Бинго-планировщик</h1>
-          <p className="auth__lead">
-            Превращаем список дел в игру: закрываешь клетки, собираешь линии, получаешь достижения и награды.
-          </p>
-          <ul className="auth__features">
-            <li>
-              <span aria-hidden="true">🎯</span> Задачи с категорией, приоритетом и оценкой времени
-            </li>
-            <li>
-              <span aria-hidden="true">🧩</span> Карточки на день, неделю или месяц — поле 3×3…5×5
-            </li>
-            <li>
-              <span aria-hidden="true">🏆</span> Достижения за клетки, линии и бинго, награды за них
-            </li>
-            <li>
-              <span aria-hidden="true">📈</span> Статистика, серии дней и напоминания в Telegram
-            </li>
-          </ul>
-        </section>
-
         <form className="card stack auth__form" onSubmit={submit}>
           <h2 className="auth__form-title">{mode === 'login' ? 'Вход в аккаунт' : 'Регистрация'}</h2>
           <p className="card__hint">

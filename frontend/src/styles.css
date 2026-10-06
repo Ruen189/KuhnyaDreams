@@ -45,42 +45,42 @@
   color-scheme: dark;
 }
 
-/* ---------- светлая тема: розовая, как на макете ---------- */
+/* ---------- светлая тема: тёплый бежевый, приглушённая яркость, контрастный текст ---------- */
 :root[data-theme='light'] {
   color-scheme: light;
-  --bg: #f4f2f8;
-  --bg-soft: #ffffff;
-  --card: #ffffff;
-  --card-2: #fdeff2;
-  --border: rgba(44, 36, 64, 0.12);
-  --text: #2c2440;
-  --muted: #7d7590;
-  --accent: #ef8ba3;
-  --accent-2: #f7b2c2;
-  --success: #45b884;
-  --danger: #d9617a;
-  --surface-1: #ffffff;
-  --surface-2: #fdeff2;
-  --field-bg: #ffffff;
-  --cell-bg: #ffffff;
-  --cell-done-bg: linear-gradient(160deg, #f6c3cb, #f9d9de);
-  --cell-done-border: #eaa0ad;
-  --cell-done-text: #6b5560;
-  --cell-free-bg: linear-gradient(160deg, #fdf1d8, #fbe7c9);
-  --cell-free-border: #eccb92;
-  --accent-soft: rgba(239, 139, 163, 0.18);
-  --accent-soft-border: rgba(239, 139, 163, 0.5);
-  --danger-soft: rgba(217, 97, 122, 0.14);
-  --danger-soft-border: rgba(217, 97, 122, 0.4);
-  --progress-track: rgba(44, 36, 64, 0.1);
-  --header-bg: linear-gradient(180deg, rgba(244, 242, 248, 0.94) 60%, rgba(244, 242, 248, 0.7));
-  --tabbar-bg: rgba(255, 255, 255, 0.94);
-  --toast-bg: #ffffff;
-  --page-glow: radial-gradient(1200px 600px at 50% -10%, #fbdde6 0%, var(--bg) 60%);
-  --board-bg: linear-gradient(160deg, #fbdcdc 0%, #f9e8ea 100%);
-  --shadow-card: 0 10px 26px rgba(76, 52, 80, 0.14);
+  --bg: #f2e9dc;
+  --bg-soft: #faf3e8;
+  --card: #fcf7ee;
+  --card-2: #f5ebdb;
+  --border: rgba(74, 60, 44, 0.14);
+  --text: #3a2f26;
+  --muted: #6f5f4d;
+  --accent: #b25a78;
+  --accent-2: #d9a75f;
+  --success: #3f9f74;
+  --danger: #b9536a;
+  --surface-1: #fcf7ee;
+  --surface-2: #f5ead9;
+  --field-bg: #fcf7ee;
+  --cell-bg: #fcf7ee;
+  --cell-done-bg: linear-gradient(160deg, #eeccd2, #f6ded9);
+  --cell-done-border: #d6a0a8;
+  --cell-done-text: #5c4740;
+  --cell-free-bg: linear-gradient(160deg, #f7e6c8, #f2dcb6);
+  --cell-free-border: #d9ba86;
+  --accent-soft: rgba(178, 90, 120, 0.14);
+  --accent-soft-border: rgba(178, 90, 120, 0.42);
+  --danger-soft: rgba(185, 83, 106, 0.13);
+  --danger-soft-border: rgba(185, 83, 106, 0.38);
+  --progress-track: rgba(58, 47, 38, 0.12);
+  --header-bg: linear-gradient(180deg, rgba(242, 233, 220, 0.94) 60%, rgba(242, 233, 220, 0.72));
+  --tabbar-bg: rgba(252, 247, 238, 0.95);
+  --toast-bg: #fcf7ee;
+  --page-glow: radial-gradient(1200px 600px at 50% -10%, #efe0c8 0%, var(--bg) 60%);
+  --board-bg: linear-gradient(160deg, #f7e6d9 0%, #f9efe2 100%);
+  --shadow-card: 0 10px 26px rgba(90, 70, 50, 0.13);
   --on-accent: #ffffff;
-  --on-accent-2: #5a3340;
+  --on-accent-2: #4a3618;
 }
 
 /* ---------- тёмная тема: спокойные серые тона ---------- */
@@ -209,6 +209,36 @@ body {
   }
 }
 
+/* ---------------- плавная смена темы ---------------- */
+/* View Transitions делают кроссфейд всей страницы: цвета и градиенты перетекают, а не «прыгают». */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.35s;
+  animation-timing-function: ease;
+}
+
+/* Фолбэк для браузеров без View Transitions: класс живёт на <html> только во время переключения,
+   поэтому обычные нажатия и наведения по-прежнему без задержек. */
+:root.theme-switching,
+:root.theme-switching *,
+:root.theme-switching *::before,
+:root.theme-switching *::after {
+  transition:
+    background-color 0.35s ease,
+    background-image 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    color 0.35s ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+
 /* ---------------- вход и регистрация ---------------- */
 .auth {
   flex: 1;
@@ -222,65 +252,14 @@ body {
   gap: clamp(14px, 1.8vw, 24px);
 }
 
-.auth__hero {
-  background: linear-gradient(160deg, var(--accent-soft), var(--cell-free-bg));
-}
-
-.auth__logo {
-  margin: 0;
-  font-size: clamp(2rem, 3.4vw, 3rem);
-  line-height: 1;
-}
-
-.auth__title {
-  margin: 0;
-  font-size: clamp(1.35rem, 2.2vw, 2.1rem);
-  font-weight: 800;
-  letter-spacing: 0.2px;
-}
-
-.auth__lead {
-  margin: 0;
-  color: var(--muted);
-  font-size: clamp(0.86rem, 0.85vw, 1rem);
-}
-
-.auth__features {
-  list-style: none;
-  margin: 2px 0 0;
-  padding: 0;
-  display: grid;
-  gap: clamp(6px, 0.6vw, 10px);
-  font-size: clamp(0.8rem, 0.8vw, 0.95rem);
-}
-
-.auth__features li {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.auth__features span {
-  font-size: 1.1em;
-  line-height: 1.35;
-}
-
 .auth__form-title {
   margin: 0;
   font-size: clamp(1.05rem, 1.1vw, 1.35rem);
   font-weight: 700;
 }
 
-/* На широком окне форма перестаёт быть «узкой колонкой»: слева — рассказ, справа — вход. */
+/* На широком окне у формы чуть больше внутренних отступов. */
 @media (min-width: 820px) {
-  .auth {
-    max-width: min(1080px, 100%);
-    grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
-    align-items: center;
-    gap: clamp(20px, 2.6vw, 40px);
-  }
-
-  .auth__hero,
   .auth__form {
     padding: clamp(20px, 1.9vw, 32px);
   }
@@ -288,21 +267,9 @@ body {
 
 /* Невысокие окна (ноутбук в альбомной ориентации, окно «в пол-экрана») — прижимаем к верху,
    чтобы форма входа всегда была видна без прокрутки. */
-@media (min-width: 820px) and (max-height: 720px) {
+@media (max-height: 720px) {
   .auth {
     align-content: start;
-    align-items: start;
-  }
-}
-
-/* Узкий ландшафт телефона: убираем вводный блок, интерфейс должен быть под рукой. */
-@media (max-width: 819px) and (max-height: 560px) {
-  .auth {
-    align-content: start;
-  }
-
-  .auth__hero {
-    display: none;
   }
 }
 
@@ -314,7 +281,7 @@ body {
   box-shadow: var(--shadow-card);
 }
 
-/* Карточка игры: в светлой теме это розовое поле, как на макете. */
+/* Карточка игры: в светлой теме это тёплое бежевое поле. */
 .card--board {
   background: var(--board-bg);
 }

@@ -11,7 +11,7 @@ import HelpSheet from './HelpSheet';
 /** Превью палитры для переключателя темы. */
 const THEME_DOTS: Record<Theme, string[]> = {
   neon: ['#7c5cff', '#ffcc4d', '#120c2b'],
-  light: ['#ef8ba3', '#f7b2c2', '#f4f2f8'],
+  light: ['#b25a78', '#d9a75f', '#f2e9dc'],
   dark: ['#8f8f9e', '#d9d9e2', '#1c1c20']
 };
 
@@ -233,10 +233,7 @@ export default function SettingsScreen({
 
       <section className="card stack">
         <div className="row row--between row--wrap">
-          <div>
-            <h2 className="card__title">Уведомления</h2>
-            <p className="card__hint">Лента приложения; при настроенном боте события дублируются в Telegram.</p>
-          </div>
+          <h2 className="card__title">Уведомления</h2>
           <button className="btn btn--soft btn--small" type="button" onClick={onOpenNotifications}>
             🔔 Лента{unreadCount > 0 ? ` · ${unreadCount}` : ''}
           </button>
@@ -314,10 +311,7 @@ export default function SettingsScreen({
       </section>
 
       <section className="card stack span-full">
-        <h2 className="card__title">Демо и сервис</h2>
-        <p className="card__hint">
-          Проверки старта периода и приближения к линии обычно идут по расписанию — здесь их можно запустить вручную.
-        </p>
+        <h2 className="card__title">Сервис и аккаунт</h2>
         <div className="row row--wrap">
           <button className="btn btn--ghost btn--small" type="button" disabled={busy} onClick={() => void runChecks()}>
             ▶️ Запустить проверки
@@ -326,9 +320,6 @@ export default function SettingsScreen({
             Выйти из аккаунта
           </button>
         </div>
-        <p className="tiny muted">
-          Приложение работает как PWA: добавьте его на главный экран телефона, чтобы открывать в один тап.
-        </p>
       </section>
       {showHelp ? <HelpSheet onClose={() => setShowHelp(false)} /> : null}
     </>
