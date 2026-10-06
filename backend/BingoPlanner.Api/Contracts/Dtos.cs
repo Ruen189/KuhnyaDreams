@@ -18,7 +18,10 @@ public record UserDto(
     bool NotifyOnProgress,
     bool NotifyOnBingo,
     int QuietHoursStart,
-    int QuietHoursEnd);
+    int QuietHoursEnd,
+    int CupsEarned,
+    int CupsSpent,
+    int Cups);
 
 public record AuthResponse(string Token, DateTime ExpiresAt, UserDto User);
 
@@ -160,6 +163,9 @@ public record ToggleCellResponse(
 public record RewardDto(Guid Id, string Title, string? Description, string Emoji, bool IsArchived, DateTime CreatedAt);
 public record UpsertRewardRequest(string Title, string? Description, string? Emoji, bool? IsArchived);
 
+/// <summary>Результат обмена кубка на награду: обновлённый баланс и сама награда.</summary>
+public record RedemptionResultDto(UserDto User, RewardDto Reward, DateTime RedeemedAt);
+
 public record ResolveAchievementRequest(Guid? RewardId, bool Skip, string? Note);
 
 // ---------- Notifications ----------
@@ -192,7 +198,9 @@ public record StatsSummaryDto(
     int BingosCollected,
     int RewardsRedeemed,
     int CurrentStreakDays,
-    int LongestStreakDays);
+    int LongestStreakDays,
+    int CupsEarned,
+    int CupsAvailable);
 
 public record DailyStatDto(DateOnly Date, int Completed);
 

@@ -1,30 +1,28 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import type { RewardInput } from '../api';
-import type { AchievementDto, RewardDto } from '../types';
-import { AchievementStatus } from '../types';
-import AchievementSheet from './AchievementSheet';
+import type { RewardDto, UserDto } from '../types';
+import { plural } from '../utils/board';
 import { EmptyState, ErrorText, Sheet, Spinner } from './ui';
 
 const EMOJI_CHOICES = ['🎁', '🍫', '☕', '🎬', '🛁', '📚', '🍿', '💆', '🚴', '🎮', '🍕', '🌴'];
 
-const STATUS_LABELS: Record<AchievementStatus, string> = {
-  [AchievementStatus.Suggested]: 'ждёт награды',
-  [AchievementStatus.Rewarded]: 'награда выбрана',
-  [AchievementStatus.Skipped]: 'пропущено'
-};
-
+/**
+ * Награды — «магазин» за кубки: кубок выдаётся за каждое достижение,
+ * один кубок = одна награда. Достижения живут в настройках.
+ */
 export default function RewardsScreen({
+  user,
+  onUser,
   onToast,
   onDataChanged
 }: {
+  user: UserDto;
+  onUser: (user: UserDto) => void;
   onToast: (message: string) => void;
   onDataChanged: () => void;
 }) {
   const [rewards, setRewards] = useState<RewardDto[]>([]);
-  const [achievements, setAchievements] = useState<AchievementDto[]>([]);
-  const [pending, setPending] = useState<AchievementDto[]>([]);
-  const [suggested, setSuggested] = useState<RewardDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +30,8 @@ export default function RewardsScreen({
   const [showForm, setShowForm] = useState(false);
   const [editingReward, setEditingReward] = useState<RewardDto | null>(null);
   const [form, setForm] = useState<RewardInput>({ title: '', description: '', emoji: '🎁' });
-  const [celebrating, setCelebrating] = useState<AchievementDto[]>([]);
+
+  const cups = user.cups ?? 0;
 
   const describe = (err: unknown) =>
     err instanceof ApiError ? err.message : 'Не удалось связаться с сервером. Проверьте соединение.';
@@ -40,11 +39,7 @@ export default function RewardsScreen({
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [rewardList, achievementList] = await Promise.all([api.rewards(), api.achievements()]);
-      setRewards(rewardList);
-      setAchievements(achievementList);
-      setPending(achievementList.filter((item) => item.status === AchievementStatus.Suggested));
-      setSuggested(rewardList.filter((item) => !item.isArchived));
+      setRewards(await api.rewards());
       setError(null);
     } catch (err) {
       setError(describe(err));
@@ -127,17 +122,16 @@ export default function RewardsScreen({
     }
   };
 
-  const resolve = async (achievementId: string, rewardId: string | null, skip: boolean) => {
+  const redeem = async (reward: RewardDto) => {
     setBusy(true);
-    setSheetError(null);
+    setError(null);
     try {
-      await api.resolveAchievement(achievementId, rewardId, skip);
-      setCelebrating((current) => current.filter((item) => item.id !== achievementId));
-      await load();
+      const result = await api.redeemReward(reward.id);
+      onUser(result.user);
+      onToast(`${result.reward.emoji} «${result.reward.title}» — ваша! Свободных кубков: ${result.user.cups}`);
       onDataChanged();
-      if (!skip) onToast('Отлично! Награда ваша 🎉');
     } catch (err) {
-      setSheetError(describe(err));
+      setError(describe(err));
     } finally {
       setBusy(false);
     }
@@ -147,15 +141,18 @@ export default function RewardsScreen({
 
   return (
     <>
-      <section className="card stack">
+      <section className="card stack span-full">
         <div className="row row--between row--wrap">
           <div>
-            <h2 className="card__title">Мои награды</h2>
-            <p className="card__hint">Маленькие приятности за закрытые линии и полные карточки.</p>
+            <h2 className="card__title">Награды</h2>
+            <p className="card__hint">Один кубок — одна награда. Кубок даётся за каждое достижение.</p>
           </div>
-          <button className="btn btn--soft btn--small" type="button" onClick={() => openForm(null)}>
-            ➕ Награда
-          </button>
+          <div className="row row--wrap">
+            <span className="cup-balance">🏆 {cups} свободно</span>
+            <button className="btn btn--soft btn--small" type="button" onClick={() => openForm(null)}>
+              ➕ Награда
+            </button>
+          </div>
         </div>
 
         <ErrorText message={error} />
@@ -179,13 +176,36 @@ export default function RewardsScreen({
                   {reward.isArchived ? <p className="list__item-meta">в архиве</p> : null}
                 </div>
                 <div className="stack" style={{ gap: 6 }}>
-                  <button className="btn btn--ghost btn--small" type="button" disabled={busy} onClick={() => openForm(reward)}>
+                  <button
+                    className="btn btn--small"
+                    type="button"
+                    disabled={busy || reward.isArchived || cups < 1}
+                    onClick={() => void redeem(reward)}
+                  >
+                    🏆 Забрать
+                  </button>
+                  <button
+                    className="btn btn--ghost btn--small"
+                    type="button"
+                    disabled={busy}
+                    onClick={() => openForm(reward)}
+                  >
                     Изменить
                   </button>
-                  <button className="btn btn--ghost btn--small" type="button" disabled={busy} onClick={() => void toggleArchive(reward)}>
+                  <button
+                    className="btn btn--ghost btn--small"
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void toggleArchive(reward)}
+                  >
                     {reward.isArchived ? 'Вернуть' : 'В архив'}
                   </button>
-                  <button className="btn btn--danger btn--small" type="button" disabled={busy} onClick={() => void removeReward(reward)}>
+                  <button
+                    className="btn btn--danger btn--small"
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void removeReward(reward)}
+                  >
                     Удалить
                   </button>
                 </div>
@@ -193,52 +213,15 @@ export default function RewardsScreen({
             ))}
           </div>
         )}
+
+        <p className="tiny muted">
+          {cups === 0
+            ? `Свободных кубков нет — закройте клетку, линию или карточку, и кубок появится. Всего заработано: ${user.cupsEarned ?? 0}.`
+            : `Свободно ${cups} ${plural(cups, 'кубок', 'кубка', 'кубков')} · потрачено на награды: ${user.cupsSpent ?? 0}.`}
+        </p>
       </section>
 
-      <section className="card stack">
-        <div className="row row--between row--wrap">
-          <div>
-            <h2 className="card__title">Достижения</h2>
-            <p className="card__hint">
-              {pending.length > 0
-                ? `Ожидают награды: ${pending.length}`
-                : 'Все достижения обработаны — так держать!'}
-            </p>
-          </div>
-          {pending.length > 0 ? (
-            <button className="btn btn--soft btn--small" type="button" onClick={() => setCelebrating(pending)}>
-              Выбрать награды
-            </button>
-          ) : null}
-        </div>
-
-        {achievements.length === 0 ? (
-          <EmptyState emoji="🏆" title="Достижений ещё нет" hint="Первая закрытая клетка уже принесёт достижение." />
-        ) : (
-          <div className="list">
-            {achievements.map((item) => (
-              <div
-                key={item.id}
-                className={`list__item ${item.status !== AchievementStatus.Suggested ? 'list__item--done' : ''}`}
-              >
-                <span aria-hidden="true" style={{ fontSize: '1.3rem' }}>
-                  {item.status === AchievementStatus.Rewarded ? '🎉' : item.status === AchievementStatus.Skipped ? '👍' : '🏆'}
-                </span>
-                <div className="list__item-main">
-                  <p className="list__item-title">{item.title}</p>
-                  <p className="list__item-meta">{item.description}</p>
-                  <p className="list__item-meta">
-                    {item.boardTitle} · {new Date(item.unlockedAt).toLocaleDateString('ru-RU')} ·{' '}
-                    {STATUS_LABELS[item.status]}
-                    {item.rewardTitle ? `: ${item.rewardEmoji ?? '🎁'} ${item.rewardTitle}` : ''}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-{showForm ? (
+      {showForm ? (
         <Sheet title={editingReward ? 'Изменить награду' : 'Новая награда'} onClose={() => setShowForm(false)}>
           <div className="stack">
             <label className="field">
@@ -279,17 +262,6 @@ export default function RewardsScreen({
             </button>
           </div>
         </Sheet>
-      ) : null}
-
-      {celebrating.length > 0 ? (
-        <AchievementSheet
-          achievements={celebrating}
-          rewards={suggested}
-          busy={busy}
-          error={sheetError}
-          onClose={() => setCelebrating([])}
-          onResolve={(id, rewardId, skip) => void resolve(id, rewardId, skip)}
-        />
       ) : null}
     </>
   );

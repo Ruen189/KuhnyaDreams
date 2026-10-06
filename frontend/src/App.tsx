@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from './api';
 import BoardScreen from './components/BoardScreen';
+import CupsSheet from './components/CupsSheet';
 import LoginScreen from './components/LoginScreen';
 import NotificationsPanel from './components/NotificationsPanel';
 import RewardsScreen from './components/RewardsScreen';
@@ -11,12 +12,12 @@ import type { Tab } from './components/TabBar';
 import TasksScreen from './components/TasksScreen';
 import { Spinner, Toast } from './components/ui';
 import { clearSession, getStoredUser, getToken, saveUser } from './session';
-import type { NotificationDto, UserDto } from './types';
+import type { AchievementDto, NotificationDto, UserDto } from './types';
 
 const TAB_TITLES: Record<Tab, string> = {
   board: 'Карточка бинго',
   tasks: 'Задачи',
-  rewards: 'Награды и достижения',
+  rewards: 'Награды',
   stats: 'Статистика',
   settings: 'Настройки'
 };
@@ -29,8 +30,20 @@ export default function App() {
   const [notifications, setNotifications] = useState<NotificationDto[]>([]);
   const [unread, setUnread] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showCups, setShowCups] = useState(false);
+  const [cupHistory, setCupHistory] = useState<AchievementDto[]>([]);
 
   const notify = useCallback((message: string) => setToast(message), []);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const fresh = await api.me();
+      setUser(fresh);
+      saveUser(fresh);
+    } catch {
+      /* баланс кубков обновится при следующем заходе */
+    }
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -123,40 +136,61 @@ export default function App() {
     }
   };
 
+  // Любое изменение данных (клетка, награда, задача) обновляет ленту и счётчик кубков.
+  const handleDataChanged = useCallback(() => {
+    void refreshNotifications();
+    void refreshUser();
+  }, [refreshNotifications, refreshUser]);
+
+  const openCups = async () => {
+    setShowCups(true);
+    try {
+      setCupHistory(await api.achievements());
+    } catch {
+      setCupHistory([]);
+    }
+  };
+
   if (restoring) return <Spinner label="Открываем вашу карточку…" />;
   if (!user) return <LoginScreen onAuthed={handleAuthed} />;
+
+  const cups = user.cups ?? 0;
 
   return (
     <div className="app">
       <header className="app__header">
         <div>
           <h1 className="app__title">Бинго-планировщик</h1>
-          <p className="app__subtitle">
-            {user.displayName} · {TAB_TITLES[tab]}
-          </p>
+          <p className="app__subtitle">{TAB_TITLES[tab]}</p>
         </div>
         <div className="app__header-actions">
           <button
             type="button"
             className="icon-btn"
-            aria-label={unread > 0 ? `Уведомления, непрочитанных: ${unread}` : 'Уведомления'}
-            onClick={() => setShowNotifications(true)}
+            aria-label={`Кубки: свободно ${cups}. Нажмите, чтобы узнать, за что они начислены.`}
+            onClick={() => void openCups()}
           >
-            🔔
-            {unread > 0 ? <span className="badge-dot">{unread > 99 ? '99+' : unread}</span> : null}
+            🏆
+            {cups > 0 ? <span className="badge-dot">{cups > 99 ? '99+' : cups}</span> : null}
           </button>
         </div>
       </header>
 
       <main className="app__main">
         {tab === 'board' ? (
-          <BoardScreen user={user} onToast={notify} onDataChanged={() => void refreshNotifications()} />
+          <BoardScreen user={user} onToast={notify} onDataChanged={handleDataChanged} />
         ) : null}
-        {tab === 'tasks' ? (
-          <TasksScreen onToast={notify} onDataChanged={() => void refreshNotifications()} />
-        ) : null}
+        {tab === 'tasks' ? <TasksScreen onToast={notify} onDataChanged={handleDataChanged} /> : null}
         {tab === 'rewards' ? (
-          <RewardsScreen onToast={notify} onDataChanged={() => void refreshNotifications()} />
+          <RewardsScreen
+            user={user}
+            onUser={(updated) => {
+              setUser(updated);
+              saveUser(updated);
+            }}
+            onToast={notify}
+            onDataChanged={handleDataChanged}
+          />
         ) : null}
         {tab === 'stats' ? <StatsScreen /> : null}
         {tab === 'settings' ? (
@@ -168,6 +202,8 @@ export default function App() {
             }}
             onToast={notify}
             onLogout={handleLogout}
+            unreadCount={unread}
+            onOpenNotifications={() => setShowNotifications(true)}
           />
         ) : null}
       </main>
@@ -184,6 +220,15 @@ export default function App() {
           onRead={(id) => void markRead(id)}
           onReadAll={() => void markAllRead()}
           onClear={() => void clearNotifications()}
+        />
+      ) : null}
+
+      {showCups ? (
+        <CupsSheet
+          achievements={cupHistory}
+          available={cups}
+          spent={user.cupsSpent ?? 0}
+          onClose={() => setShowCups(false)}
         />
       ) : null}
     </div>

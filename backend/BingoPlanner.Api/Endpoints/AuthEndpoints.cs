@@ -36,11 +36,11 @@ public static class AuthEndpoints
             await db.SaveChangesAsync(ct);
 
             var (token, expiresAt) = authService.CreateToken(user);
-            return Results.Ok(new AuthResponse(token, expiresAt, user.ToDto()));
+            // У нового пользователя достижений ещё нет — кубков тоже.
+            return Results.Ok(new AuthResponse(token, expiresAt, user.ToDto(0)));
         })
         .WithSummary("Регистрация пользователя")
         .AllowAnonymous();
-
         auth.MapPost("/login", async (LoginRequest request, AppDbContext db, AuthService authService, CancellationToken ct) =>
         {
             var email = (request.Email ?? string.Empty).Trim().ToLowerInvariant();
@@ -49,7 +49,8 @@ public static class AuthEndpoints
                 return Results.Json(new { error = "Неверный e-mail или пароль." }, statusCode: StatusCodes.Status401Unauthorized);
 
             var (token, expiresAt) = authService.CreateToken(user);
-            return Results.Ok(new AuthResponse(token, expiresAt, user.ToDto()));
+            var cups = await GameService.CupsEarnedAsync(db, user.Id, ct);
+            return Results.Ok(new AuthResponse(token, expiresAt, user.ToDto(cups)));
         })
         .WithSummary("Вход по e-mail и паролю")
         .AllowAnonymous();
@@ -59,7 +60,10 @@ public static class AuthEndpoints
         me.MapGet("/me", async (ClaimsPrincipal principal, AppDbContext db, CancellationToken ct) =>
         {
             var user = await db.Users.FirstOrDefaultAsync(u => u.Id == principal.GetUserId(), ct);
-            return user is null ? Results.NotFound() : Results.Ok(user.ToDto());
+            if (user is null) return Results.NotFound();
+
+            var cups = await GameService.CupsEarnedAsync(db, user.Id, ct);
+            return Results.Ok(user.ToDto(cups));
         })
         .WithSummary("Текущий пользователь и настройки уведомлений");
 
@@ -79,7 +83,8 @@ public static class AuthEndpoints
             if (request.QuietHoursEnd is not null) user.QuietHoursEnd = Math.Clamp(request.QuietHoursEnd.Value, 0, 23);
 
             await db.SaveChangesAsync(ct);
-            return Results.Ok(user.ToDto());
+            var cups = await GameService.CupsEarnedAsync(db, user.Id, ct);
+            return Results.Ok(user.ToDto(cups));
         })
         .WithSummary("Обновить профиль и настройки уведомлений");
     }

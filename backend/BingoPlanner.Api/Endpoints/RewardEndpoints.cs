@@ -69,6 +69,28 @@ public static class RewardEndpoints
         })
         .WithSummary("Удалить награду");
 
+        rewards.MapPost("/{id:guid}/redeem", async (Guid id, ClaimsPrincipal principal, AppDbContext db, GameService game, CancellationToken ct) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == principal.GetUserId(), ct);
+            if (user is null) return Results.NotFound();
+
+            try
+            {
+                var (updated, reward) = await game.RedeemAsync(user, id, ct);
+                var earned = await GameService.CupsEarnedAsync(db, updated.Id, ct);
+                return Results.Ok(new RedemptionResultDto(updated.ToDto(earned), reward.ToDto(), DateTime.UtcNow));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return Results.NotFound(new { error = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+        })
+        .WithSummary("Обменять кубок на награду");
+
         MapAchievementEndpoints(app);
     }
 

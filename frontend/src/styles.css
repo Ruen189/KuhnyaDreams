@@ -10,6 +10,30 @@
   --accent-2: #ffcc4d;
   --success: #34d399;
   --danger: #ff6b8b;
+
+  /* Поверхности и служебные цвета — меняются вместе с темой. */
+  --surface-1: rgba(255, 255, 255, 0.05);
+  --surface-2: rgba(255, 255, 255, 0.09);
+  --field-bg: rgba(0, 0, 0, 0.25);
+  --cell-bg: rgba(255, 255, 255, 0.05);
+  --cell-done-bg: linear-gradient(160deg, rgba(52, 211, 153, 0.32), rgba(52, 211, 153, 0.16));
+  --cell-done-border: rgba(52, 211, 153, 0.55);
+  --cell-done-text: var(--text);
+  --cell-free-bg: linear-gradient(160deg, rgba(255, 204, 77, 0.28), rgba(255, 204, 77, 0.12));
+  --cell-free-border: rgba(255, 204, 77, 0.55);
+  --accent-soft: rgba(124, 92, 255, 0.16);
+  --accent-soft-border: rgba(124, 92, 255, 0.4);
+  --danger-soft: rgba(255, 107, 139, 0.16);
+  --danger-soft-border: rgba(255, 107, 139, 0.5);
+  --progress-track: rgba(255, 255, 255, 0.12);
+  --header-bg: linear-gradient(180deg, rgba(18, 12, 43, 0.96) 60%, rgba(18, 12, 43, 0.6));
+  --tabbar-bg: rgba(18, 12, 43, 0.92);
+  --toast-bg: #2f2470;
+  --page-glow: radial-gradient(1200px 600px at 50% -10%, #2a1b5e 0%, var(--bg) 60%);
+  --board-bg: linear-gradient(160deg, var(--card) 0%, var(--card-2) 100%);
+  --shadow-card: 0 12px 30px rgba(0, 0, 0, 0.25);
+  --on-accent: #ffffff;
+  --on-accent-2: #2a1b04;
   --radius: 16px;
   /* Адаптивные токены: интерфейс плавно растёт вместе с окном, но остаётся в разумных границах. */
   --font-ui: clamp(15px, 0.34vw + 14px, 17.5px);
@@ -19,6 +43,82 @@
   --shell-max: min(1180px, 100%);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   color-scheme: dark;
+}
+
+/* ---------- светлая тема: розовая, как на макете ---------- */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f4f2f8;
+  --bg-soft: #ffffff;
+  --card: #ffffff;
+  --card-2: #fdeff2;
+  --border: rgba(44, 36, 64, 0.12);
+  --text: #2c2440;
+  --muted: #7d7590;
+  --accent: #ef8ba3;
+  --accent-2: #f7b2c2;
+  --success: #45b884;
+  --danger: #d9617a;
+  --surface-1: #ffffff;
+  --surface-2: #fdeff2;
+  --field-bg: #ffffff;
+  --cell-bg: #ffffff;
+  --cell-done-bg: linear-gradient(160deg, #f6c3cb, #f9d9de);
+  --cell-done-border: #eaa0ad;
+  --cell-done-text: #6b5560;
+  --cell-free-bg: linear-gradient(160deg, #fdf1d8, #fbe7c9);
+  --cell-free-border: #eccb92;
+  --accent-soft: rgba(239, 139, 163, 0.18);
+  --accent-soft-border: rgba(239, 139, 163, 0.5);
+  --danger-soft: rgba(217, 97, 122, 0.14);
+  --danger-soft-border: rgba(217, 97, 122, 0.4);
+  --progress-track: rgba(44, 36, 64, 0.1);
+  --header-bg: linear-gradient(180deg, rgba(244, 242, 248, 0.94) 60%, rgba(244, 242, 248, 0.7));
+  --tabbar-bg: rgba(255, 255, 255, 0.94);
+  --toast-bg: #ffffff;
+  --page-glow: radial-gradient(1200px 600px at 50% -10%, #fbdde6 0%, var(--bg) 60%);
+  --board-bg: linear-gradient(160deg, #fbdcdc 0%, #f9e8ea 100%);
+  --shadow-card: 0 10px 26px rgba(76, 52, 80, 0.14);
+  --on-accent: #ffffff;
+  --on-accent-2: #5a3340;
+}
+
+/* ---------- тёмная тема: спокойные серые тона ---------- */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #1c1c20;
+  --bg-soft: #232329;
+  --card: #26262d;
+  --card-2: #2e2e36;
+  --border: rgba(255, 255, 255, 0.1);
+  --text: #ececf1;
+  --muted: #a2a2ae;
+  --accent: #8f8f9e;
+  --accent-2: #d9d9e2;
+  --success: #7fd1a3;
+  --danger: #e9899b;
+  --surface-1: rgba(255, 255, 255, 0.05);
+  --surface-2: rgba(255, 255, 255, 0.09);
+  --field-bg: rgba(0, 0, 0, 0.3);
+  --cell-bg: rgba(255, 255, 255, 0.05);
+  --cell-done-bg: linear-gradient(160deg, rgba(127, 209, 163, 0.26), rgba(127, 209, 163, 0.12));
+  --cell-done-border: rgba(127, 209, 163, 0.45);
+  --cell-done-text: var(--text);
+  --cell-free-bg: linear-gradient(160deg, rgba(217, 217, 226, 0.2), rgba(217, 217, 226, 0.08));
+  --cell-free-border: rgba(217, 217, 226, 0.4);
+  --accent-soft: rgba(143, 143, 158, 0.2);
+  --accent-soft-border: rgba(143, 143, 158, 0.45);
+  --danger-soft: rgba(233, 137, 155, 0.16);
+  --danger-soft-border: rgba(233, 137, 155, 0.45);
+  --progress-track: rgba(255, 255, 255, 0.12);
+  --header-bg: linear-gradient(180deg, rgba(28, 28, 32, 0.96) 60%, rgba(28, 28, 32, 0.7));
+  --tabbar-bg: rgba(28, 28, 32, 0.94);
+  --toast-bg: #2f2f37;
+  --page-glow: radial-gradient(1200px 600px at 50% -10%, #33333c 0%, var(--bg) 60%);
+  --board-bg: linear-gradient(160deg, var(--card) 0%, var(--card-2) 100%);
+  --shadow-card: 0 12px 30px rgba(0, 0, 0, 0.35);
+  --on-accent: #17171b;
+  --on-accent-2: #1c1c20;
 }
 
 * {
@@ -34,7 +134,7 @@ body {
 }
 
 body {
-  background: radial-gradient(1200px 600px at 50% -10%, #2a1b5e 0%, var(--bg) 60%);
+  background: var(--page-glow);
   color: var(--text);
   font-family: 'Segoe UI', Roboto, 'Helvetica Neue', system-ui, sans-serif;
   font-size: var(--font-ui);
@@ -67,7 +167,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: clamp(10px, 1.1vw, 18px) clamp(14px, 1.4vw, 24px) clamp(8px, 0.8vw, 14px);
-  background: linear-gradient(180deg, rgba(18, 12, 43, 0.96) 60%, rgba(18, 12, 43, 0.6));
+  background: var(--header-bg);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
 }
@@ -128,7 +228,7 @@ body {
 }
 
 .auth__hero {
-  background: linear-gradient(160deg, rgba(124, 92, 255, 0.3), rgba(255, 204, 77, 0.12));
+  background: linear-gradient(160deg, var(--accent-soft), var(--cell-free-bg));
 }
 
 .auth__logo {
@@ -216,7 +316,12 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: var(--pad-card);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-card);
+}
+
+/* Карточка игры: в светлой теме это розовое поле, как на макете. */
+.card--board {
+  background: var(--board-bg);
 }
 
 .card--flat {
@@ -290,7 +395,7 @@ textarea {
   border-radius: 14px;
   border: 1px solid transparent;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.12s ease, filter 0.12s ease;
@@ -312,14 +417,14 @@ textarea {
 }
 
 .btn--soft {
-  background: rgba(124, 92, 255, 0.16);
-  border-color: rgba(124, 92, 255, 0.4);
+  background: var(--accent-soft);
+  border-color: var(--accent-soft-border);
   color: var(--text);
 }
 
 .btn--danger {
-  background: rgba(255, 107, 139, 0.16);
-  border-color: rgba(255, 107, 139, 0.5);
+  background: var(--danger-soft);
+  border-color: var(--danger-soft-border);
   color: var(--danger);
 }
 
@@ -342,7 +447,7 @@ textarea {
   justify-content: center;
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface-1);
   font-size: clamp(1.05rem, 0.4vw + 0.95rem, 1.25rem);
   cursor: pointer;
   position: relative;
@@ -357,7 +462,7 @@ textarea {
   padding: 0 4px;
   border-radius: 9px;
   background: var(--accent-2);
-  color: #2a1b04;
+  color: var(--on-accent-2);
   font-size: 0.68rem;
   font-weight: 700;
   display: flex;
@@ -384,7 +489,7 @@ textarea {
   min-height: var(--control-h);
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--field-bg);
 }
 
 .textarea {
@@ -402,7 +507,7 @@ textarea {
   grid-template-columns: repeat(5, 1fr);
   gap: 4px;
   padding: 8px 8px calc(8px + var(--safe-bottom));
-  background: rgba(18, 12, 43, 0.92);
+  background: var(--tabbar-bg);
   border-top: 1px solid var(--border);
   backdrop-filter: blur(10px);
 }
@@ -428,7 +533,7 @@ textarea {
 
 .tabbar__item--active {
   color: var(--text);
-  background: rgba(124, 92, 255, 0.2);
+  background: var(--accent-soft);
 }
 
 @media (min-width: 900px) {
@@ -447,7 +552,7 @@ textarea {
 .btn--move-on {
   background: var(--accent-2);
   border-color: var(--accent-2);
-  color: #2a1b0a;
+  color: var(--on-accent-2);
   font-weight: 700;
 }
 
@@ -457,7 +562,8 @@ textarea {
 }
 
 .tabbar__item--primary.tabbar__item--active {
-  background: rgba(255, 204, 77, 0.22);
+  background: var(--accent-2);
+  color: var(--on-accent-2);
 }
 
 /* Строка списка, открывающая подробности карточки. */
@@ -471,12 +577,12 @@ textarea {
 }
 
 .list__item--tap:hover {
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--surface-2);
 }
 
 .list__item--current {
   border-color: var(--accent);
-  background: rgba(124, 92, 255, 0.18);
+  background: var(--accent-soft);
 }
 
 /* ---------------- карточка бинго ---------------- */
@@ -497,7 +603,7 @@ textarea {
   padding: clamp(6px, 0.6vw, 10px) clamp(5px, 0.5vw, 9px);
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--cell-bg);
   text-align: center;
   cursor: pointer;
   overflow: hidden;
@@ -525,18 +631,19 @@ textarea {
 }
 
 .board__cell--done {
-  background: linear-gradient(160deg, rgba(52, 211, 153, 0.32), rgba(52, 211, 153, 0.16));
-  border-color: rgba(52, 211, 153, 0.55);
+  background: var(--cell-done-bg);
+  border-color: var(--cell-done-border);
 }
 
 .board__cell--done .board__cell-text {
   text-decoration: line-through;
+  color: var(--cell-done-text);
   opacity: 0.85;
 }
 
 .board__cell--free {
-  background: linear-gradient(160deg, rgba(255, 204, 77, 0.28), rgba(255, 204, 77, 0.12));
-  border-color: rgba(255, 204, 77, 0.55);
+  background: var(--cell-free-bg);
+  border-color: var(--cell-free-border);
   align-items: center;
   justify-content: center;
   text-align: center;
@@ -572,7 +679,7 @@ textarea {
 .board__cell--drop-target {
   outline: 3px dashed var(--accent-2);
   outline-offset: -4px;
-  background: rgba(255, 204, 77, 0.16);
+  background: var(--accent-soft);
 }
 
 @keyframes cell-wiggle {
@@ -608,7 +715,7 @@ textarea {
 .progress {
   height: 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--progress-track);
   overflow: hidden;
 }
 
@@ -630,17 +737,17 @@ textarea {
   border-radius: 999px;
   font-size: clamp(0.7rem, 0.2vw + 0.64rem, 0.82rem);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-1);
 }
 
 .chip--success {
-  background: rgba(52, 211, 153, 0.18);
-  border-color: rgba(52, 211, 153, 0.5);
+  background: var(--cell-done-bg);
+  border-color: var(--cell-done-border);
 }
 
 .chip--warn {
-  background: rgba(255, 204, 77, 0.18);
-  border-color: rgba(255, 204, 77, 0.5);
+  background: var(--cell-free-bg);
+  border-color: var(--cell-free-border);
 }
 
 .list {
@@ -655,7 +762,7 @@ textarea {
   align-items: flex-start;
   padding: 12px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-1);
   border: 1px solid var(--border);
 }
 
@@ -734,7 +841,7 @@ textarea {
   max-width: 92vw;
   padding: 12px 16px;
   border-radius: 14px;
-  background: #2f2470;
+  background: var(--toast-bg);
   border: 1px solid var(--border);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   font-size: 0.85rem;
@@ -754,7 +861,7 @@ textarea {
   padding: 12px;
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-1);
   text-align: left;
   cursor: pointer;
 }
@@ -812,7 +919,7 @@ textarea {
 .stat-tile {
   padding: clamp(12px, 1vw, 18px);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-1);
   border: 1px solid var(--border);
 }
 
@@ -823,5 +930,145 @@ textarea {
 
 .stat-tile__label {
   font-size: clamp(0.72rem, 0.15vw + 0.68rem, 0.8rem);
+  color: var(--muted);
+}
+
+/* ---------------- кубки ---------------- */
+.cup-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: clamp(12px, 1.2vw, 18px) clamp(14px, 1.4vw, 20px);
+  border-radius: var(--radius);
+  border: 1px solid var(--cell-free-border);
+  background: var(--cell-free-bg);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  font-size: clamp(1rem, 0.5vw + 0.9rem, 1.2rem);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  animation: cup-pop 0.28s ease;
+}
+
+.cup-alert:hover {
+  filter: brightness(1.05);
+}
+
+.cup-alert:active {
+  transform: scale(0.99);
+}
+
+.cup-alert__cup {
+  font-size: clamp(1.5rem, 1vw + 1.3rem, 2rem);
+  line-height: 1;
+  animation: cup-shake 1.8s ease-in-out 1;
+}
+
+.cup-alert__text {
+  flex: 1;
+}
+
+.cup-alert__chevron {
+  font-size: 1.5rem;
+  opacity: 0.65;
+}
+
+@keyframes cup-pop {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes cup-shake {
+  0%,
+  60%,
+  100% {
+    transform: rotate(0);
+  }
+  10% {
+    transform: rotate(-12deg);
+  }
+  20% {
+    transform: rotate(10deg);
+  }
+  30% {
+    transform: rotate(-8deg);
+  }
+  40% {
+    transform: rotate(6deg);
+  }
+  50% {
+    transform: rotate(-3deg);
+  }
+}
+
+/* Плашка «сколько кубков свободно» — в шапке и на вкладке награда. */
+.cup-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--cell-free-bg);
+  border: 1px solid var(--cell-free-border);
+  font-weight: 700;
+}
+
+
+/* ---------------- выбор темы в настройках ---------------- */
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.theme-option--active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.theme-option__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.theme-option__dots {
+  display: flex;
+  gap: 4px;
+}
+
+.theme-option__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+.theme-option__hint {
+  font-size: clamp(0.7rem, 0.15vw + 0.66rem, 0.78rem);
   color: var(--muted);
 }

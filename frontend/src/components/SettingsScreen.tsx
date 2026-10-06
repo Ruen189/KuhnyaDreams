@@ -1,28 +1,65 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import type { UpdateUserInput } from '../api';
-import type { UserDto } from '../types';
-import { ErrorText, Switch } from './ui';
+import type { AchievementDto, UserDto } from '../types';
+import { formatDateTime } from '../utils/board';
+import { applyTheme, getTheme, THEMES } from '../session';
+import type { Theme } from '../session';
+import { EmptyState, ErrorText, Switch } from './ui';
+
+/** Превью палитры для переключателя темы. */
+const THEME_DOTS: Record<Theme, string[]> = {
+  neon: ['#7c5cff', '#ffcc4d', '#120c2b'],
+  light: ['#ef8ba3', '#f7b2c2', '#f4f2f8'],
+  dark: ['#8f8f9e', '#d9d9e2', '#1c1c20']
+};
 
 export default function SettingsScreen({
   user,
   onUser,
   onToast,
-  onLogout
+  onLogout,
+  unreadCount,
+  onOpenNotifications
 }: {
   user: UserDto;
   onUser: (user: UserDto) => void;
   onToast: (message: string) => void;
   onLogout: () => void;
+  unreadCount: number;
+  onOpenNotifications: () => void;
 }) {
   const [displayName, setDisplayName] = useState(user.displayName);
   const [telegramChatId, setTelegramChatId] = useState(user.telegramChatId ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [telegramResult, setTelegramResult] = useState<string | null>(null);
+  const [theme, setTheme] = useState<Theme>(() => getTheme());
+  const [achievements, setAchievements] = useState<AchievementDto[]>([]);
+  const [achievementsError, setAchievementsError] = useState<string | null>(null);
 
   const describe = (err: unknown) =>
     err instanceof ApiError ? err.message : 'Не удалось связаться с сервером. Проверьте соединение.';
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const items = await api.achievements();
+        if (alive) setAchievements(items);
+      } catch (err) {
+        if (alive) setAchievementsError(describe(err));
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const pickTheme = (next: Theme) => {
+    applyTheme(next);
+    setTheme(next);
+  };
 
   const patch = async (changes: UpdateUserInput, message: string) => {
     setBusy(true);
@@ -77,7 +114,7 @@ export default function SettingsScreen({
 
   return (
     <>
-      <section className="card stack">
+      <section className="card stack span-full">
         <div>
           <h2 className="card__title">Профиль</h2>
           <p className="card__hint">{user.email}</p>
@@ -112,21 +149,96 @@ export default function SettingsScreen({
           <button className="btn btn--soft" type="button" disabled={busy} onClick={() => void saveProfile()}>
             Сохранить
           </button>
-          <button className="btn btn--ghost" type="button" disabled={busy} onClick={() => void testTelegram()}>
+          <button
+            className="btn btn--ghost"
+            type="button"
+            disabled={busy || telegramChatId.trim().length === 0}
+            onClick={() => void testTelegram()}
+          >
             Проверить Telegram
           </button>
         </div>
+        {telegramResult ? <p className="tiny muted">{telegramResult}</p> : null}
+      </section>
 
-        {telegramResult ? <p className="small muted">{telegramResult}</p> : null}
+      <section className="card stack span-full">
+        <div>
+          <h2 className="card__title">Тема</h2>
+          <p className="card__hint">Выбор сохраняется на этом устройстве.</p>
+        </div>
+        <div className="theme-options">
+          {THEMES.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className={`theme-option ${theme === option.id ? 'theme-option--active' : ''}`}
+              onClick={() => pickTheme(option.id)}
+            >
+              <span className="theme-option__head">
+                <span aria-hidden="true">{option.emoji}</span>
+                {option.label}
+              </span>
+              <span className="theme-option__dots" aria-hidden="true">
+                {THEME_DOTS[option.id].map((color) => (
+                  <span key={color} className="theme-option__dot" style={{ background: color }} />
+                ))}
+              </span>
+              <span className="theme-option__hint">{option.hint}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="card stack span-full">
+        <div>
+          <h2 className="card__title">🏅 Достижения</h2>
+          <p className="card__hint">
+            Кубок даётся за каждое достижение, а обменять его можно на вкладке «Награды». Свободно кубков:{' '}
+            {user.cups ?? 0} из {user.cupsEarned ?? 0}.
+          </p>
+        </div>
+
+        <ErrorText message={achievementsError} />
+
+        {achievements.length === 0 ? (
+          <EmptyState
+            emoji="🏅"
+            title="Достижений ещё нет"
+            hint="Первая закрытая клетка уже принесёт достижение и кубок."
+          />
+        ) : (
+          <div className="list">
+            {achievements.map((item) => (
+              <div key={item.id} className="list__item list__item--done">
+                <span aria-hidden="true" style={{ fontSize: '1.3rem' }}>
+                  🏅
+                </span>
+                <div className="list__item-main">
+                  <p className="list__item-title">{item.title}</p>
+                  <p className="list__item-meta">{item.description}</p>
+                  <p className="list__item-meta">
+                    {item.boardTitle} · {formatDateTime(item.unlockedAt)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="card stack">
-        <h2 className="card__title">Уведомления</h2>
-        <p className="card__hint">Напоминания приходят в ленту приложения, а при настроенном боте — ещё и в Telegram.</p>
-
+        <div className="row row--between row--wrap">
+          <div>
+            <h2 className="card__title">Уведомления</h2>
+            <p className="card__hint">Лента приложения; при настроенном боте события дублируются в Telegram.</p>
+          </div>
+          <button className="btn btn--soft btn--small" type="button" onClick={onOpenNotifications}>
+            🔔 Лента{unreadCount > 0 ? ` · ${unreadCount}` : ''}
+          </button>
+        </div>
         <Switch
           label="Лента в приложении"
-          hint="Счётчик непрочитанных в шапке"
+          hint="События копятся в ленте, её можно открыть кнопкой выше"
           checked={user.inAppEnabled}
           onChange={(value) => void patch({ inAppEnabled: value }, value ? 'Лента включена' : 'Лента выключена')}
         />
@@ -207,3 +319,4 @@ export default function SettingsScreen({
     </>
   );
 }
+

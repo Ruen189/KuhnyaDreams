@@ -7,6 +7,7 @@ import type {
   BoardStatus,
   NotificationDto,
   NotificationFeedDto,
+  RedemptionResultDto,
   RewardDto,
   StatsResponse,
   TaskDifficulty,
@@ -181,6 +182,7 @@ export const api = {
   updateReward: (id: string, input: RewardInput) =>
     request<RewardDto>(`/api/rewards/${id}`, { method: 'PUT', body: JSON.stringify(input) }),
   deleteReward: (id: string) => request<void>(`/api/rewards/${id}`, { method: 'DELETE' }),
+  redeemReward: (id: string) => post<RedemptionResultDto>(`/api/rewards/${id}/redeem`),
 
   notifications: (take = 50, unreadOnly = false) =>
     request<NotificationFeedDto>(`/api/notifications/?take=${take}&unreadOnly=${unreadOnly}`),

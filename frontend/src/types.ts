@@ -62,6 +62,10 @@ export interface UserDto {
   notifyOnBingo: boolean;
   quietHoursStart: number;
   quietHoursEnd: number;
+  /** Кубки: заработано (1 за каждое достижение), потрачено на награды и свободный остаток. */
+  cupsEarned: number;
+  cupsSpent: number;
+  cups: number;
 }
 
 export interface AuthResponse {
@@ -183,6 +187,13 @@ export interface RewardDto {
   createdAt: string;
 }
 
+/** Ответ на обмен кубка: обновлённый профиль (с новым балансом) и полученная награда. */
+export interface RedemptionResultDto {
+  user: UserDto;
+  reward: RewardDto;
+  redeemedAt: string;
+}
+
 export interface NotificationDto {
   id: string;
   boardId: string | null;
@@ -209,6 +220,8 @@ export interface StatsSummaryDto {
   rewardsRedeemed: number;
   currentStreakDays: number;
   longestStreakDays: number;
+  cupsEarned: number;
+  cupsAvailable: number;
 }
 
 export interface DailyStatDto {

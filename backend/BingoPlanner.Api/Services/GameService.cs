@@ -197,7 +197,9 @@ public class GameService(AppDbContext db, NotificationService notifications, ILo
                 Metric = candidate.Metric,
                 Title = candidate.Title,
                 Description = candidate.Description,
-                Status = AchievementStatus.Suggested
+                // Кубок начисляется сразу: 1 достижение = 1 кубок. Обмен на награду — отдельным шагом.
+                Status = AchievementStatus.Rewarded,
+                ResolvedAt = DateTime.UtcNow
             };
 
             db.Achievements.Add(achievement);
@@ -218,7 +220,7 @@ public class GameService(AppDbContext db, NotificationService notifications, ILo
                 user,
                 isBingo ? NotificationType.Bingo : NotificationType.Progress,
                 achievement.Title,
-                $"{achievement.Description} Загляни в награды — можно выбрать что-то приятное.",
+                $"{achievement.Description} Кубок уже в копилке — обменяйте его на награду.",
                 $"achievement-{achievement.Id}",
                 board.Id,
                 respectQuietHours: !isBingo,
@@ -301,5 +303,44 @@ public class GameService(AppDbContext db, NotificationService notifications, ILo
         }
 
         await ReorderAsync(board, order, ct);
+    }
+
+    // ---------------------------------------------------------------- кубки
+
+    /// <summary>Кубки выдаются автоматически: по одному за каждое достижение.</summary>
+    public static async Task<int> CupsEarnedAsync(AppDbContext db, Guid userId, CancellationToken ct) =>
+        await db.Achievements.CountAsync(a => a.UserId == userId, ct);
+
+    /// <summary>
+    /// Обмен кубка на награду: списывает один кубок, пишет запись в ленту и возвращает награду.
+    /// </summary>
+    public async Task<(User User, Reward Reward)> RedeemAsync(User user, Guid rewardId, CancellationToken ct)
+    {
+        var reward = await db.Rewards.FirstOrDefaultAsync(r => r.Id == rewardId && r.UserId == user.Id, ct)
+            ?? throw new KeyNotFoundException("Награда не найдена.");
+
+        if (reward.IsArchived)
+            throw new InvalidOperationException("Награда в архиве — верните её из архива, чтобы обменять кубок.");
+
+        var earned = await CupsEarnedAsync(db, user.Id, ct);
+        var available = Math.Max(0, earned - user.CupsSpent);
+        if (available == 0)
+            throw new InvalidOperationException("Свободных кубков нет: закройте клетку, линию или карточку — и получите новый кубок.");
+
+        user.CupsSpent += 1;
+        await db.SaveChangesAsync(ct);
+
+        await notifications.NotifyAsync(
+            user,
+            NotificationType.Reward,
+            $"Награда получена {reward.Emoji}",
+            $"«{reward.Title}» обменяна на 1 кубок. Свободных кубков: {available - 1}.",
+            $"redeem-{Guid.NewGuid():N}",
+            boardId: null,
+            respectQuietHours: false,
+            ct);
+
+        logger.LogInformation("Пользователь {UserId} обменял кубок на награду {RewardId}", user.Id, reward.Id);
+        return (user, reward);
     }
 }

@@ -2,12 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { api, ApiError } from '../api';
 import type { BoardInput } from '../api';
-import type { AchievementDto, BoardDto, BoardSummaryDto, CellDto, RewardDto, TaskDto, UserDto } from '../types';
+import type { AchievementDto, BoardDto, BoardSummaryDto, CellDto, TaskDto, UserDto } from '../types';
 import { BoardStatus } from '../types';
 import { plural } from '../utils/board';
-import AchievementSheet from './AchievementSheet';
 import BoardHistorySheet from './BoardHistorySheet';
 import CreateBoardSheet from './CreateBoardSheet';
+import CupsAlert from './CupsAlert';
+import CupsSheet from './CupsSheet';
 import { EmptyState, ErrorText, ProgressBar, Spinner } from './ui';
 
 interface Props {
@@ -25,9 +26,9 @@ export default function BoardScreen({ user, onToast, onDataChanged }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [celebrating, setCelebrating] = useState<AchievementDto[]>([]);
-  const [suggestedRewards, setSuggestedRewards] = useState<RewardDto[]>([]);
-  const [sheetError, setSheetError] = useState<string | null>(null);
+  // Кубки, которые пользователь ещё не «прочитал»: алерт над карточкой копит их до тапа.
+  const [cupAlert, setCupAlert] = useState<AchievementDto[]>([]);
+  const [showCups, setShowCups] = useState(false);
   // Режим перемещения: зажал клетку — перетащил на другую.
   const [moveMode, setMoveMode] = useState(false);
   const [dragFrom, setDragFrom] = useState<string | null>(null);
@@ -80,9 +81,11 @@ export default function BoardScreen({ user, onToast, onDataChanged }: Props) {
       setBoard(response.board);
       onDataChanged();
       if (response.newAchievements.length > 0) {
-        setCelebrating(response.newAchievements);
-        setSuggestedRewards(response.suggestedRewards);
-        setSheetError(null);
+        // События подряд склеиваются в один алерт: «Получено 3 кубка!».
+        setCupAlert((current) => [
+          ...current,
+          ...response.newAchievements.filter((item) => !current.some((entry) => entry.id === item.id))
+        ]);
       } else if (response.previousProgress.hasBingo) {
         onToast('Ячейка снята. Линия больше не закрыта.');
       }
@@ -104,26 +107,6 @@ const createBoard = async (input: BoardInput) => {
       onDataChanged();
     } catch (err) {
       setCreateError(describe(err));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const resolveAchievement = async (achievementId: string, rewardId: string | null, skip: boolean) => {
-    setBusy(true);
-    setSheetError(null);
-    try {
-      await api.resolveAchievement(achievementId, rewardId, skip);
-      setCelebrating((current) => {
-        const rest = current.filter((item) => item.id !== achievementId);
-        if (rest.length === 0) setSuggestedRewards([]);
-        return rest;
-      });
-      if (board) await loadBoard(board.id);
-      if (!skip) onToast('Награда закреплена за достижением 🎁');
-      onDataChanged();
-    } catch (err) {
-      setSheetError(describe(err));
     } finally {
       setBusy(false);
     }
@@ -216,9 +199,13 @@ const createBoard = async (input: BoardInput) => {
 
   const cells = board ? [...board.cells].sort((a, b) => a.position - b.position) : [];
   const playable = board?.progress.playableCells ?? 0;
-return (
+  return (
     <>
-      <section className="card stack span-full">
+      {cupAlert.length > 0 ? (
+        <CupsAlert count={cupAlert.length} onClick={() => setShowCups(true)} />
+      ) : null}
+
+      <section className="card card--board stack span-full">
         <div className="row row--between row--wrap">
           <h2 className="card__title">{board ? board.title : 'Карточки бинго'}</h2>
           <div className="row row--wrap">
@@ -399,17 +386,15 @@ return (
         />
       ) : null}
 
-      {celebrating.length > 0 ? (
-        <AchievementSheet
-          achievements={celebrating}
-          rewards={suggestedRewards}
-          busy={busy}
-          error={sheetError}
+      {showCups ? (
+        <CupsSheet
+          achievements={cupAlert}
+          available={user.cups ?? 0}
+          spent={user.cupsSpent ?? 0}
           onClose={() => {
-            setCelebrating([]);
-            setSuggestedRewards([]);
+            setShowCups(false);
+            setCupAlert([]);
           }}
-          onResolve={(id, rewardId, skip) => void resolveAchievement(id, rewardId, skip)}
         />
       ) : null}
     </>

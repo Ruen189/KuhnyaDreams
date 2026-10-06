@@ -5,10 +5,11 @@ namespace BingoPlanner.Api.Services;
 
 public static class Mappers
 {
-    public static UserDto ToDto(this User u) => new(
+    public static UserDto ToDto(this User u, int cupsEarned = 0) => new(
         u.Id, u.Email, u.DisplayName, u.TelegramChatId,
         u.InAppEnabled, u.TelegramEnabled, u.NotifyOnPeriodStart, u.NotifyOnProgress, u.NotifyOnBingo,
-        u.QuietHoursStart, u.QuietHoursEnd);
+        u.QuietHoursStart, u.QuietHoursEnd,
+        cupsEarned, u.CupsSpent, Math.Max(0, cupsEarned - u.CupsSpent));
 
     public static TaskDto ToDto(this TaskItem t) => new(
         t.Id, t.Title, t.Notes, t.Category, t.Priority, t.Difficulty, t.EstimatedMinutes,

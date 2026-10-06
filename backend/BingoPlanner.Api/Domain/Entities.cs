@@ -43,6 +43,12 @@ public class User
     public int QuietHoursStart { get; set; } = 22; // час, с которого уведомления не отправляются
     public int QuietHoursEnd { get; set; } = 8;    // час, с которого уведомления снова можно отправлять
 
+    /// <summary>
+    /// Сколько кубков уже обменяно на награды. Заработано кубков = число достижений (по 1 кубку за каждое),
+    /// поэтому отдельное поле «заработано» не нужно — баланс считается на лету.
+    /// </summary>
+    public int CupsSpent { get; set; }
+
     public List<TaskItem> Tasks { get; set; } = [];
     public List<Board> Boards { get; set; } = [];
     public List<Reward> Rewards { get; set; } = [];

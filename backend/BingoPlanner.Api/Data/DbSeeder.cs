@@ -14,6 +14,7 @@ public static class DbSeeder
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeeder");
 
         await db.Database.EnsureCreatedAsync();
+        await EnsureCupsColumnAsync(db, logger);
 
         if (!seedDemoData) return;
         if (await db.Users.AnyAsync()) return;
@@ -50,5 +51,36 @@ public static class DbSeeder
 
         await db.SaveChangesAsync();
         logger.LogInformation("Демо-данные созданы: пользователь {Email}, пароль demo1234", user.Email);
+    }
+
+    /// <summary>
+    /// Проект живёт без миграций (EnsureCreated), поэтому новую колонку Users.CupsSpent добавляем
+    /// вручную и идемпотентно: на уже существующей базе EnsureCreated ничего не меняет.
+    /// </summary>
+    private static async Task EnsureCupsColumnAsync(AppDbContext db, ILogger logger)
+    {
+        var provider = db.Database.ProviderName ?? string.Empty;
+
+        if (provider.Contains("Sqlite", StringComparison.OrdinalIgnoreCase))
+        {
+            var columns = await db.Database
+                .SqlQueryRaw<string>("SELECT name AS Value FROM pragma_table_info('Users')")
+                .ToListAsync();
+            if (columns.Contains("CupsSpent", StringComparer.OrdinalIgnoreCase)) return;
+
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE Users ADD COLUMN CupsSpent INTEGER NOT NULL DEFAULT 0");
+            logger.LogInformation("Схема SQLite обновлена: добавлена колонка Users.CupsSpent");
+        }
+        else if (provider.Contains("Npgsql", StringComparison.OrdinalIgnoreCase))
+        {
+            var columns = await db.Database
+                .SqlQueryRaw<string>(
+                    "SELECT column_name AS \"Value\" FROM information_schema.columns WHERE table_name = 'Users' AND column_name = 'CupsSpent'")
+                .ToListAsync();
+            if (columns.Count > 0) return;
+
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE \"Users\" ADD COLUMN \"CupsSpent\" integer NOT NULL DEFAULT 0");
+            logger.LogInformation("Схема Postgres обновлена: добавлена колонка Users.CupsSpent");
+        }
     }
 }

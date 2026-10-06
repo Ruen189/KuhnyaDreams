@@ -21,6 +21,8 @@ public static class StatsEndpoints
             var boards = await db.Boards.Include(b => b.Cells).Where(b => b.UserId == userId).ToListAsync(ct);
             var achievements = await db.Achievements.Where(a => a.UserId == userId).ToListAsync(ct);
             var tasks = await db.Tasks.Where(t => t.UserId == userId).ToListAsync(ct);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+            var cupsSpent = user?.CupsSpent ?? 0;
 
             var cells = boards.SelectMany(b => b.Cells).ToList();
             var completedCells = cells.Where(c => c.CompletedAt is not null).ToList();
@@ -54,9 +56,11 @@ public static class StatsEndpoints
                 CompletedBoards: boards.Count(b => b.Status == BoardStatus.Completed),
                 LinesCollected: achievements.Count(a => a.Kind == AchievementKind.Line),
                 BingosCollected: achievements.Count(a => a.Kind == AchievementKind.FullCard),
-                RewardsRedeemed: achievements.Count(a => a.Status == AchievementStatus.Rewarded),
+                RewardsRedeemed: cupsSpent,
                 CurrentStreakDays: current,
-                LongestStreakDays: longest);
+                LongestStreakDays: longest,
+                CupsEarned: achievements.Count,
+                CupsAvailable: Math.Max(0, achievements.Count - cupsSpent));
 
             var history = boards
                 .OrderByDescending(b => b.StartDate)

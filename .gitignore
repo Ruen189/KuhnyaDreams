@@ -18,6 +18,10 @@ npm-debug.log*
 # --- собранная SPA внутри API ----------------------------------------------
 backend/BingoPlanner.Api/wwwroot/
 
+# логи дымового прогона API
+scripts/*.log
+scripts/*.log.err
+
 # --- IDE / ОС ---------------------------------------------------------------
 .vs/
 .vscode/

@@ -65,7 +65,8 @@ export default function StatsScreen() {
               <StatTile emoji="🎉" value={stats.summary.bingosCollected} label="полных карточек" />
               <StatTile emoji="🎁" value={stats.summary.rewardsRedeemed} label="наград получено" />
               <StatTile emoji="🔥" value={stats.summary.currentStreakDays} label="дней подряд сейчас" />
-              <StatTile emoji="🏅" value={stats.summary.longestStreakDays} label="лучшая серия, дней" />
+              <StatTile emoji="📈" value={stats.summary.longestStreakDays} label="лучшая серия, дней" />
+              <StatTile emoji="🏆" value={stats.summary.cupsEarned} label="кубков заработано" />
               <StatTile emoji="🗒" value={stats.summary.totalTasks} label="задач всего" />
               <StatTile emoji="🎲" value={`${stats.summary.activeBoards} / ${stats.summary.completedBoards}`} label="активных / закрытых карточек" />
             </div>
