@@ -174,15 +174,10 @@ body {
 
 .app__title {
   margin: 0;
-  font-size: clamp(1.05rem, 0.45vw + 0.95rem, 1.35rem);
+  min-width: 0;
+  font-size: clamp(1.15rem, 0.5vw + 1.02rem, 1.5rem);
   font-weight: 700;
   letter-spacing: 0.2px;
-}
-
-.app__subtitle {
-  margin: 2px 0 0;
-  font-size: clamp(0.74rem, 0.2vw + 0.7rem, 0.88rem);
-  color: var(--muted);
 }
 
 .app__header-actions {
@@ -453,19 +448,24 @@ textarea {
   position: relative;
 }
 
-.badge-dot {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 9px;
+/* Кнопка кубков в шапке: счётчик стоит рядом с иконкой и не перекрывает её. */
+.icon-btn--cups {
+  width: auto;
+  min-width: clamp(40px, 3vw, 50px);
+  gap: 7px;
+  padding-inline: clamp(10px, 1vw, 14px);
+}
+
+.icon-btn__count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
   background: var(--accent-2);
   color: var(--on-accent-2);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 }
@@ -1054,6 +1054,73 @@ textarea {
   align-items: center;
   gap: 8px;
   font-weight: 700;
+}
+
+/* ---------------- сворачиваемые списки (достижения в настройках) ---------------- */
+.list--clamped {
+  position: relative;
+  max-height: 216px;
+  overflow: hidden;
+}
+
+.list--clamped::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 64px;
+  background: linear-gradient(180deg, transparent, var(--card-2));
+  pointer-events: none;
+}
+
+.list--clamped.list--open {
+  max-height: none;
+}
+
+.list--clamped.list--open::after {
+  content: none;
+}
+
+/* ---------------- справка ---------------- */
+.help {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 1vw, 18px);
+}
+
+.help__item {
+  display: flex;
+  gap: 10px;
+}
+
+.help__emoji {
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.help__title {
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.help__text {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(0.82rem, 0.2vw + 0.78rem, 0.92rem);
+  line-height: 1.45;
+}
+
+.help__list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: clamp(0.82rem, 0.2vw + 0.78rem, 0.92rem);
+  line-height: 1.45;
+}
+
+.help__list li {
+  margin-bottom: 4px;
 }
 
 .theme-option__dots {

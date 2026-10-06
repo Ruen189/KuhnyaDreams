@@ -159,19 +159,16 @@ export default function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <div>
-          <h1 className="app__title">Бинго-планировщик</h1>
-          <p className="app__subtitle">{TAB_TITLES[tab]}</p>
-        </div>
+        <h1 className="app__title">{TAB_TITLES[tab]}</h1>
         <div className="app__header-actions">
           <button
             type="button"
-            className="icon-btn"
+            className="icon-btn icon-btn--cups"
             aria-label={`Кубки: свободно ${cups}. Нажмите, чтобы узнать, за что они начислены.`}
             onClick={() => void openCups()}
           >
-            🏆
-            {cups > 0 ? <span className="badge-dot">{cups > 99 ? '99+' : cups}</span> : null}
+            <span aria-hidden="true">🏆</span>
+            {cups > 0 ? <span className="icon-btn__count">{cups > 99 ? '99+' : cups}</span> : null}
           </button>
         </div>
       </header>

@@ -146,7 +146,7 @@ export default function TasksScreen({
           <div>
             <h2 className="card__title">Мои задачи</h2>
             <p className="card__hint">
-              {visible.length} из {tasks.length} в списке. Из активных задач собирается карточка бинго.
+              {visible.length} из {tasks.length} в списке.
             </p>
           </div>
           <div className="row row--wrap">

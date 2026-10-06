@@ -6,6 +6,7 @@ import { formatDateTime } from '../utils/board';
 import { applyTheme, getTheme, THEMES } from '../session';
 import type { Theme } from '../session';
 import { EmptyState, ErrorText, Switch } from './ui';
+import HelpSheet from './HelpSheet';
 
 /** Превью палитры для переключателя темы. */
 const THEME_DOTS: Record<Theme, string[]> = {
@@ -37,6 +38,8 @@ export default function SettingsScreen({
   const [theme, setTheme] = useState<Theme>(() => getTheme());
   const [achievements, setAchievements] = useState<AchievementDto[]>([]);
   const [achievementsError, setAchievementsError] = useState<string | null>(null);
+  const [showAllAchievements, setShowAllAchievements] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const describe = (err: unknown) =>
     err instanceof ApiError ? err.message : 'Не удалось связаться с сервером. Проверьте соединение.';
@@ -138,9 +141,6 @@ export default function SettingsScreen({
             onChange={(event) => setTelegramChatId(event.target.value)}
             placeholder="Например: 123456789"
           />
-          <span className="tiny muted">
-            Узнать id можно у бота @userinfobot. Пока бот не настроен, уведомления живут только в приложении.
-          </span>
         </label>
 
         <ErrorText message={error} />
@@ -162,10 +162,7 @@ export default function SettingsScreen({
       </section>
 
       <section className="card stack span-full">
-        <div>
-          <h2 className="card__title">Тема</h2>
-          <p className="card__hint">Выбор сохраняется на этом устройстве.</p>
-        </div>
+        <h2 className="card__title">Тема</h2>
         <div className="theme-options">
           {THEMES.map((option) => (
             <button
@@ -190,12 +187,9 @@ export default function SettingsScreen({
       </section>
 
       <section className="card stack span-full">
-        <div>
+        <div className="row row--between row--wrap">
           <h2 className="card__title">🏅 Достижения</h2>
-          <p className="card__hint">
-            Кубок даётся за каждое достижение, а обменять его можно на вкладке «Награды». Свободно кубков:{' '}
-            {user.cups ?? 0} из {user.cupsEarned ?? 0}.
-          </p>
+          <span className="cup-balance">🏆 {user.cups ?? 0} свободно</span>
         </div>
 
         <ErrorText message={achievementsError} />
@@ -207,22 +201,33 @@ export default function SettingsScreen({
             hint="Первая закрытая клетка уже принесёт достижение и кубок."
           />
         ) : (
-          <div className="list">
-            {achievements.map((item) => (
-              <div key={item.id} className="list__item list__item--done">
-                <span aria-hidden="true" style={{ fontSize: '1.3rem' }}>
-                  🏅
-                </span>
-                <div className="list__item-main">
-                  <p className="list__item-title">{item.title}</p>
-                  <p className="list__item-meta">{item.description}</p>
-                  <p className="list__item-meta">
-                    {item.boardTitle} · {formatDateTime(item.unlockedAt)}
-                  </p>
+          <>
+            <div className={`list ${showAllAchievements ? 'list--clamped list--open' : 'list--clamped'}`}>
+              {achievements.map((item) => (
+                <div key={item.id} className="list__item list__item--done">
+                  <span aria-hidden="true" style={{ fontSize: '1.3rem' }}>
+                    🏅
+                  </span>
+                  <div className="list__item-main">
+                    <p className="list__item-title">{item.title}</p>
+                    <p className="list__item-meta">{item.description}</p>
+                    <p className="list__item-meta">
+                      {item.boardTitle} · {formatDateTime(item.unlockedAt)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            {achievements.length > 2 ? (
+              <button
+                className="btn btn--ghost btn--small"
+                type="button"
+                onClick={() => setShowAllAchievements((current) => !current)}
+              >
+                {showAllAchievements ? 'Свернуть' : `Показать все (${achievements.length})`}
+              </button>
+            ) : null}
+          </>
         )}
       </section>
 
@@ -300,6 +305,15 @@ export default function SettingsScreen({
       </section>
 
       <section className="card stack">
+        <div className="row row--between row--wrap">
+          <h2 className="card__title">Помощь</h2>
+          <button className="btn btn--soft btn--small" type="button" onClick={() => setShowHelp(true)}>
+            ❓ Как играть
+          </button>
+        </div>
+      </section>
+
+      <section className="card stack span-full">
         <h2 className="card__title">Демо и сервис</h2>
         <p className="card__hint">
           Проверки старта периода и приближения к линии обычно идут по расписанию — здесь их можно запустить вручную.
@@ -316,6 +330,7 @@ export default function SettingsScreen({
           Приложение работает как PWA: добавьте его на главный экран телефона, чтобы открывать в один тап.
         </p>
       </section>
+      {showHelp ? <HelpSheet onClose={() => setShowHelp(false)} /> : null}
     </>
   );
 }

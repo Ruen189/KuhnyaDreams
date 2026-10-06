@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import type { RewardInput } from '../api';
 import type { RewardDto, UserDto } from '../types';
-import { plural } from '../utils/board';
 import { EmptyState, ErrorText, Sheet, Spinner } from './ui';
 
 const EMOJI_CHOICES = ['🎁', '🍫', '☕', '🎬', '🛁', '📚', '🍿', '💆', '🚴', '🎮', '🍕', '🌴'];
@@ -143,10 +142,7 @@ export default function RewardsScreen({
     <>
       <section className="card stack span-full">
         <div className="row row--between row--wrap">
-          <div>
-            <h2 className="card__title">Награды</h2>
-            <p className="card__hint">Один кубок — одна награда. Кубок даётся за каждое достижение.</p>
-          </div>
+          <h2 className="card__title">Награды</h2>
           <div className="row row--wrap">
             <span className="cup-balance">🏆 {cups} свободно</span>
             <button className="btn btn--soft btn--small" type="button" onClick={() => openForm(null)}>
@@ -215,9 +211,7 @@ export default function RewardsScreen({
         )}
 
         <p className="tiny muted">
-          {cups === 0
-            ? `Свободных кубков нет — закройте клетку, линию или карточку, и кубок появится. Всего заработано: ${user.cupsEarned ?? 0}.`
-            : `Свободно ${cups} ${plural(cups, 'кубок', 'кубка', 'кубков')} · потрачено на награды: ${user.cupsSpent ?? 0}.`}
+          Заработано кубков: {user.cupsEarned ?? 0} · обменяно на награды: {user.cupsSpent ?? 0}
         </p>
       </section>
 

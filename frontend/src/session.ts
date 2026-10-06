@@ -7,8 +7,8 @@ const THEME_KEY = 'bingo.theme';
 export type Theme = 'neon' | 'light' | 'dark';
 
 export const THEMES: { id: Theme; label: string; emoji: string; hint: string }[] = [
-  { id: 'neon', label: 'Неон', emoji: '🌌', hint: 'Как сейчас: фиолетовый неон' },
-  { id: 'light', label: 'Светлая', emoji: '🌸', hint: 'Розовая, для яркого дня' },
+  { id: 'neon', label: 'Неон', emoji: '🌌', hint: 'Фиолетовый фон, яркие неоновые акценты' },
+  { id: 'light', label: 'Светлая', emoji: '🌸', hint: 'Розовые оттенки на светлом фоне' },
   { id: 'dark', label: 'Тёмная', emoji: '🌚', hint: 'Спокойные серые тона' }
 ];
 
