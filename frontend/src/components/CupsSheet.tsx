@@ -34,13 +34,13 @@ export default function CupsSheet({
                 <span aria-hidden="true" style={{ fontSize: '1.3rem' }}>
                   🏆
                 </span>
-                <span className="list__item-main">
-                  <span className="list__item-title">{item.title}</span>
-                  <span className="list__item-meta">{item.description}</span>
-                  <span className="list__item-meta">
+                <div className="list__item-main">
+                  <p className="list__item-title">{item.title}</p>
+                  <p className="list__item-meta">{item.description}</p>
+                  <p className="list__item-meta">
                     {item.boardTitle} · {formatDateTime(item.unlockedAt)}
-                  </span>
-                </span>
+                  </p>
+                </div>
               </div>
             ))}
           </div>
